@@ -1,0 +1,44 @@
+﻿{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "AIRD",
+  "Description": "AI-Ready Development Assistant for Unreal Engine 5.7.0",
+  "Category": "Artificial Intelligence",
+  "CreatedBy": "AIRD",
+  "CreatedByURL": "https://example.local/aird",
+  "DocsURL": "",
+  "MarketplaceURL": "",
+  "SupportURL": "",
+  "CanContainContent": true,
+  "IsBetaVersion": false,
+  "IsExperimentalVersion": false,
+  "Installed": false,
+  "EngineVersion": "5.7.0",
+  "Modules": [
+    {
+      "Name": "AIRD",
+      "Type": "Editor",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "AIRDEditor",
+      "Type": "Editor",
+      "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "PythonScriptPlugin",
+      "Enabled": true
+    },
+    {
+      "Name": "WebBrowserWidget",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
+      "Enabled": true
+    }
+  ]
+}
