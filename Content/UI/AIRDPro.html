@@ -1,0 +1,696 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIRD - AI-Ready Development Assistant</title>
+    <style>
+        :root {
+            --bg-main: #131921;
+            --bg-panel: #1a2431;
+            --bg-panel-2: #101722;
+            --accent: #FE6051;
+            --accent-soft: rgba(254, 96, 81, 0.20);
+            --text-main: #f4f7fb;
+            --text-muted: #9eb0c5;
+            --border: rgba(254, 96, 81, 0.24);
+            --ok: #1fd38a;
+            --danger: #ff5f5f;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            width: 100%; height: 100%; overflow: hidden;
+            font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+            background: var(--bg-main); color: var(--text-main);
+        }
+        .aird-shell {
+            display: grid;
+            grid-template-columns: 300px minmax(560px, 1fr) 360px;
+            width: 100vw; height: 100vh; min-height: 620px;
+            overflow: hidden;
+        }
+        .panel { min-width: 0; min-height: 0; overflow: hidden; border-right: 1px solid var(--border); background: var(--bg-panel); }
+        .panel:last-child { border-right: 0; border-left: 1px solid var(--border); background: var(--bg-panel-2); }
+        .left-panel, .right-panel { display: flex; flex-direction: column; }
+        .panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); background: #111925; flex: 0 0 auto; }
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+        .brand-badge {
+            width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff;
+            display: grid; place-items: center; font-size: 12px; font-weight: 700;
+        }
+        .subtle { color: var(--text-muted); font-size: 12px; }
+        .left-scroll, .right-scroll { overflow: auto; padding: 14px; flex: 1 1 auto; }
+        .section-title {
+            margin: 14px 0 8px; font-size: 11px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.08em;
+        }
+        .actor-item, .stat-item, .plugin-item {
+            background: #141f2b; border: 1px solid var(--border); border-radius: 10px;
+            padding: 8px 10px; margin-bottom: 8px; font-size: 12px; cursor: pointer;
+        }
+        .actor-item.active { background: var(--accent-soft); border-color: var(--accent); }
+        .center-panel {
+            display: grid; grid-template-rows: auto 240px auto 1fr auto;
+            min-height: 0; min-width: 0; background: var(--bg-main);
+        }
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; border-bottom: 1px solid var(--border); background: #0f1722;
+        }
+        .chip, .btn, .send-btn, .tab-btn {
+            border: 1px solid var(--border); background: #182231; color: var(--text-main);
+            border-radius: 10px; padding: 7px 10px; font-size: 12px; cursor: pointer;
+        }
+        .chip { background: var(--accent-soft); border-color: var(--accent); }
+.status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: var(--danger); }
+        .status-dot.connected { background: var(--ok); }
+        .engine-toggle-wrap { display: flex; align-items: center; gap: 14px; }
+        .engine-toggle-copy { display: flex; flex-direction: column; gap: 6px; }
+        .engine-toggle-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.16em; }
+        .engine-toggle {
+            position: relative; width: 116px; height: 54px; appearance: none; -webkit-appearance: none;
+            background: linear-gradient(180deg, #2a3650 0%, #1b2437 100%);
+            border: 1px solid rgba(132, 150, 255, 0.28); border-radius: 27px; cursor: pointer; transition: all 0.35s ease;
+            box-shadow: inset 0 10px 18px rgba(8, 10, 20, 0.55), inset 0 -4px 8px rgba(255, 255, 255, 0.04);
+        }
+        .engine-toggle::before {
+            content: ''; position: absolute; top: 4px; left: 4px; width: 46px; height: 46px;
+            background: linear-gradient(180deg, #3d4d75 0%, #1e2840 100%);
+            border-radius: 50px; transition: all 0.35s ease;
+            box-shadow: 0 8px 20px rgba(3, 6, 15, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.25);
+        }
+        .engine-toggle::after {
+            content: 'OFF'; position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+            font-size: 17px; font-weight: 800; letter-spacing: 0.08em; color: rgba(255, 189, 238, 0.92);
+            text-shadow: 0 0 12px rgba(255, 84, 214, 0.95), 0 0 28px rgba(109, 163, 255, 0.5);
+            transition: all 0.35s ease;
+        }
+        .engine-toggle:checked {
+            background: linear-gradient(135deg, rgba(255, 64, 188, 0.9), rgba(102, 163, 255, 0.82));
+            border-color: rgba(170, 207, 255, 0.76);
+            box-shadow: 0 0 18px rgba(255, 84, 214, 0.72), 0 0 34px rgba(95, 164, 255, 0.48), inset 0 0 22px rgba(255, 255, 255, 0.12);
+        }
+        .engine-toggle:checked::before {
+            left: 66px; background: linear-gradient(180deg, #f3f8ff 0%, #c3d4ff 100%);
+            box-shadow: 0 10px 24px rgba(28, 42, 84, 0.42), 0 0 18px rgba(147, 214, 255, 0.65);
+        }
+        .engine-toggle:checked::after {
+            content: 'ON'; left: 22px; color: #fff5ff;
+            text-shadow: 0 0 14px rgba(255, 98, 219, 0.95), 0 0 26px rgba(96, 184, 255, 0.8), 0 0 46px rgba(96, 184, 255, 0.45);
+        }
+        .engine-status { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #8ea2b8; transition: all 0.3s ease; }
+        .engine-status.active { color: #fbe8ff; text-shadow: 0 0 10px rgba(255, 98, 219, 0.7), 0 0 22px rgba(96, 184, 255, 0.45); }
+        .viewport-wrap { border-bottom: 1px solid var(--border); background: #0f1722; display: grid; grid-template-rows: 1fr auto; min-height: 0; }
+        #viewportCanvas { width: 100%; height: 100%; display: block; background: #0e1621; }
+        .viewport-controls { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+        .agent-bar { display: flex; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); background: #0f1722; align-items: center; flex-wrap: wrap; }
+        .chat-wrap { min-height: 0; overflow: hidden; display: grid; grid-template-rows: 1fr; }
+        .messages { overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+        .msg { display: flex; gap: 8px; max-width: 92%; }
+        .msg.user { margin-left: auto; flex-direction: row-reverse; }
+        .avatar {
+            width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+            font-size: 11px; font-weight: 700; flex: 0 0 auto;
+        }
+        .msg.assistant .avatar { background: var(--accent); color: #fff; }
+        .msg.user .avatar { background: #2d3e55; color: #fff; }
+        .bubble { background: #1a2534; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; font-size: 13px; word-break: break-word; }
+        .msg.user .bubble { background: #233247; }
+        .input-wrap {
+            border-top: 1px solid var(--border); padding: 10px; background: #101722;
+            display: grid; grid-template-rows: auto auto auto; gap: 8px;
+        }
+        .suggestions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .vision-preview { display: none; align-items: center; gap: 8px; background: #1a2534; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+        .vision-preview.active { display: flex; }
+        .vision-preview img { width: 70px; height: 46px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+        .entry { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; min-height: 0; }
+        .entry-actions { display: flex; gap: 6px; }
+        textarea {
+            width: 100%; resize: none; min-height: 42px; max-height: 130px;
+            border: 1px solid var(--border); background: #1a2534; color: var(--text-main);
+            border-radius: 10px; padding: 10px; font-size: 13px;
+        }
+        .send-btn { background: var(--accent); border-color: var(--accent); color: #fff; min-width: 46px; font-weight: 700; }
+        .tabs {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;
+            padding: 10px; border-bottom: 1px solid var(--border); background: #0f1722;
+        }
+        .tab-btn.active { background: var(--accent-soft); border-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .field { margin-bottom: 10px; }
+        .field label { display: block; margin-bottom: 5px; font-size: 12px; color: var(--text-muted); }
+        .field input, .field select {
+            width: 100%; border: 1px solid var(--border); background: #1a2534; color: var(--text-main);
+            border-radius: 10px; padding: 8px 10px; font-size: 12px;
+        }
+        .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .filter { font-size: 11px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--border); cursor: pointer; background: #172132; }
+        .filter.active { background: var(--accent-soft); border-color: var(--accent); }
+        .model-card {
+            background: #141f2b; border: 1px solid var(--border); border-radius: 10px;
+            padding: 9px; margin-bottom: 8px; cursor: pointer;
+        }
+        .model-card.active { border-color: var(--accent); background: var(--accent-soft); }
+        .model-name { font-size: 13px; font-weight: 600; }
+        .model-meta { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .stat-box { background: #141f2b; border: 1px solid var(--border); border-radius: 10px; padding: 9px; }
+        .stat-value { font-weight: 700; color: var(--accent); }
+        .code-block { background: #0c131d; border: 1px solid var(--border); border-radius: 8px; padding: 8px; overflow: auto; margin-top: 6px; }
+        @media (max-width: 1360px) { .aird-shell { grid-template-columns: 270px minmax(420px, 1fr) 320px; } }
+        @media (max-width: 1080px) {
+            .aird-shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+            .panel, .panel:last-child { border-right: 0; border-left: 0; }
+            .left-panel, .right-panel { max-height: 240px; }
+            .center-panel { grid-template-rows: auto 220px auto 1fr auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="aird-shell">
+        <aside class="panel left-panel">
+            <div class="panel-header"><div class="brand"><div class="brand-badge">AIRD</div><div><div>AIRD</div><div class="subtle">AI-Ready Development Assistant</div></div></div></div>
+            <div class="left-scroll">
+                <div class="section-title">Scene Explorer</div>
+                <div id="actorTree"></div>
+                <div class="section-title">Scene Statistics</div>
+                <div id="sceneStats"></div>
+            </div>
+        </aside>
+
+        <main class="center-panel">
+<div class="topbar">
+                <div class="engine-toggle-wrap">
+                    <div class="engine-toggle-copy">
+                        <div class="engine-toggle-label">AIRD ENGINE STATUS</div>
+                        <div><span class="engine-status" id="engineStatus">OFFLINE</span></div>
+                    </div>
+                    <input type="checkbox" class="engine-toggle" id="engineToggle" />
+                </div>
+                <div class="chip" id="currentModelBadge">GPT-4 Turbo</div>
+                <div><span class="subtle">MCP </span><span id="apiStatus" class="status-dot"></span></div>
+            </div>
+            <section class="viewport-wrap">
+                <canvas id="viewportCanvas" width="1200" height="240"></canvas>
+                <div class="viewport-controls">
+                    <button class="btn" id="captureBtn">Capture</button>
+                    <button class="btn" id="analyzeBtn">Analyze Scene</button>
+                    <button class="btn" id="screenshotBtn">Screenshot</button>
+                    <button class="btn" id="sceneVizBtn">Scene Viz</button>
+                </div>
+            </section>
+            <div class="agent-bar">
+                <span class="subtle">Agent Team:</span>
+                <button class="btn">Code</button><button class="btn">Scene</button><button class="btn">Tools</button>
+                <button class="btn" id="runAgentsBtn">Run Collaboration</button>
+            </div>
+            <section class="chat-wrap"><div class="messages" id="chatMessages"></div></section>
+            <div class="input-wrap">
+                <div class="suggestions" id="suggestionsBar"></div>
+                <div class="vision-preview" id="visionPreview"><img id="visionImage" alt="Attached" /><button class="btn" id="removeVisionBtn">Remove</button></div>
+                <div class="entry">
+                    <div class="entry-actions"><button class="btn" id="attachImageBtn">Attach</button><button class="btn" id="codeBtn">Code</button></div>
+                    <textarea id="chatInput" rows="1" placeholder="Type your command... (Shift+Enter for new line)"></textarea>
+                    <button class="send-btn" id="sendBtn">Send</button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="panel right-panel">
+            <div class="panel-header"><div class="brand"><div class="brand-badge">AIRD</div><div><div>Control Panel</div><div class="subtle">Models, API, Analytics</div></div></div></div>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="models">Models</button>
+                <button class="tab-btn" data-tab="settings">Settings</button>
+                <button class="tab-btn" data-tab="analytics">Analytics</button>
+                <button class="tab-btn" data-tab="plugins">Plugins</button>
+            </div>
+            <div class="right-scroll">
+                <section id="modelsTab" class="tab-content active">
+                    <div class="field"><label for="companySelect">Provider</label><select id="companySelect"><option value="all">All Providers</option><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="google">Google</option><option value="meta">Meta</option><option value="mistral">Mistral</option><option value="cohere">Cohere</option><option value="deepseek">DeepSeek</option><option value="local">Local</option></select></div>
+                    <div class="field"><label for="modelSearchInput">Search</label><input id="modelSearchInput" placeholder="Search models..." /></div>
+                    <div class="filter-row">
+                        <button class="filter active" data-filter="all">All</button><button class="filter" data-filter="vision">Vision</button><button class="filter" data-filter="code">Code</button><button class="filter" data-filter="fast">Fast</button><button class="filter" data-filter="cheap">Cheap</button><button class="filter" data-filter="local">Local</button>
+                    </div>
+                    <div id="modelsList"></div>
+                </section>
+                <section id="settingsTab" class="tab-content">
+                    <div class="field"><label for="apiKeyInput">API Key</label><input type="password" id="apiKeyInput" placeholder="Enter API key" /></div>
+                    <div class="field"><label for="mcpServer">MCP Server URL</label><input id="mcpServer" value="ws://localhost:8765" /></div>
+                    <div class="field"><label for="temperatureInput">Temperature</label><input type="range" id="temperatureInput" min="0" max="2" step="0.1" value="0.7" /><div class="subtle">Value: <span id="temperatureValue">0.7</span></div></div>
+                    <div class="field"><label for="maxTokensInput">Max Tokens</label><input id="maxTokensInput" type="number" value="4000" /></div>
+                    <button class="btn" id="saveApiBtn">Save Configuration</button>
+                    <button class="btn" id="connectLocalBtn" style="margin-top:8px;">Connect Local Model</button>
+                </section>
+                <section id="analyticsTab" class="tab-content">
+                    <div class="stats-grid">
+                        <div class="stat-box"><div class="subtle">Messages</div><div class="stat-value" id="totalMessages">0</div></div>
+                        <div class="stat-box"><div class="subtle">Tokens</div><div class="stat-value" id="totalTokens">0</div></div>
+                        <div class="stat-box"><div class="subtle">Avg Response</div><div class="stat-value" id="avgResponseTime">0ms</div></div>
+                        <div class="stat-box"><div class="subtle">Session</div><div class="stat-value" id="sessionDuration">0m</div></div>
+                    </div>
+                </section>
+                <section id="pluginsTab" class="tab-content">
+                    <div class="section-title">Installed Plugins</div><div id="pluginsList"></div>
+                    <button class="btn" id="installPluginBtn">Install Example Plugin</button>
+                </section>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        class AIRDApp {
+            constructor() {
+this.currentModel = null;
+                this.engineRunning = false;
+                this.selectedCompany = 'all';
+                this.searchQuery = '';
+                this.currentFilter = 'all';
+                this.selectedActor = null;
+                this.attachedImage = null;
+                this.isProcessing = false;
+                this.apiValid = false;
+                this.ws = null;
+                this.wsUrl = localStorage.getItem('aird_mcp_server') || 'ws://localhost:8765';
+                this.rpcId = 1;
+                this.pendingRpc = new Map();
+                this.plugins = [];
+                this.analytics = { totalMessages: 0, totalTokens: 0, responseTimes: [], sessionStart: Date.now() };
+                this.availableModels = [
+                    { name: 'GPT-4 Turbo', provider: 'OpenAI', contextWindow: 128000, category: ['vision', 'code'], speed: 'medium' },
+                    { name: 'GPT-4o', provider: 'OpenAI', contextWindow: 128000, category: ['vision', 'fast'], speed: 'fast' },
+                    { name: 'Claude Sonnet', provider: 'Anthropic', contextWindow: 200000, category: ['vision', 'code'], speed: 'medium' },
+                    { name: 'Gemini 1.5 Pro', provider: 'Google', contextWindow: 1000000, category: ['vision'], speed: 'medium' },
+                    { name: 'Llama 3.1 70B', provider: 'Meta', contextWindow: 128000, category: ['code'], speed: 'medium' },
+                    { name: 'Mistral Small', provider: 'Mistral', contextWindow: 32000, category: ['cheap', 'fast'], speed: 'fast' },
+                    { name: 'DeepSeek Coder', provider: 'DeepSeek', contextWindow: 128000, category: ['code'], speed: 'medium' },
+                    { name: 'Llama Local', provider: 'Local', contextWindow: 128000, category: ['local', 'cheap'], speed: 'fast' }
+                ];
+                this.actors = [
+                    { id: 1, name: 'PlayerStart', type: 'PlayerStart', location: { x: 0, y: 0, z: 100 } },
+                    { id: 2, name: 'DirectionalLight', type: 'Light', location: { x: 420, y: 0, z: 900 } },
+                    { id: 3, name: 'Floor', type: 'StaticMesh', location: { x: 0, y: 0, z: 0 } },
+                    { id: 4, name: 'MainCamera', type: 'Camera', location: { x: -250, y: -300, z: 180 } }
+                ];
+                this.init();
+            }
+            init() {
+                this.currentModel = this.availableModels[0];
+                this.renderModels(); this.updateModelBadge(); this.renderActors(); this.renderPlugins(); this.drawViewport();
+                this.restoreApiKey(); this.setupEvents(); this.connectWebSocket(); this.startSuggestions();
+                this.addMessage('AIRD is ready. You can query the scene, generate assets, or run MCP commands.', 'assistant');
+            }
+setupEvents() {
+                document.getElementById('engineToggle').addEventListener('change', (e) => this.toggleEngine(e.target.checked));
+                document.getElementById('sendBtn').addEventListener('click', () => this.sendMessage());
+                document.getElementById('chatInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
+                document.getElementById('chatInput').addEventListener('input', () => this.autoResize());
+                document.getElementById('captureBtn').addEventListener('click', () => this.captureScreenshot());
+                document.getElementById('screenshotBtn').addEventListener('click', () => this.captureScreenshot());
+                document.getElementById('analyzeBtn').addEventListener('click', () => this.processCommand('analyze the scene'));
+                document.getElementById('sceneVizBtn').addEventListener('click', () => sceneVizWidget.show());
+                document.getElementById('attachImageBtn').addEventListener('click', () => this.attachImage());
+                document.getElementById('removeVisionBtn').addEventListener('click', () => this.removeVisionAttachment());
+                document.getElementById('codeBtn').addEventListener('click', () => this.insertCodeTemplate());
+                document.getElementById('installPluginBtn').addEventListener('click', () => this.installExamplePlugin());
+                document.getElementById('runAgentsBtn').addEventListener('click', () => this.runAgents());
+                document.getElementById('saveApiBtn').addEventListener('click', () => this.saveApiKey());
+                document.getElementById('connectLocalBtn').addEventListener('click', () => this.connectLocalModel());
+                document.getElementById('temperatureInput').addEventListener('input', (e) => { document.getElementById('temperatureValue').textContent = e.target.value; });
+                document.getElementById('companySelect').addEventListener('change', (e) => { this.selectedCompany = e.target.value; this.renderModels(); });
+                document.getElementById('modelSearchInput').addEventListener('input', (e) => { this.searchQuery = e.target.value.trim(); this.renderModels(); });
+                document.querySelectorAll('.filter').forEach((el) => el.addEventListener('click', () => { document.querySelectorAll('.filter').forEach((f) => f.classList.remove('active')); el.classList.add('active'); this.currentFilter = el.dataset.filter; this.renderModels(); }));
+                document.querySelectorAll('.tab-btn').forEach((btn) => btn.addEventListener('click', () => this.switchTab(btn.dataset.tab)));
+            }
+            switchTab(tabName) {
+                document.querySelectorAll('.tab-btn').forEach((t) => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach((t) => t.classList.remove('active'));
+                document.querySelector('.tab-btn[data-tab="' + tabName + '"]').classList.add('active');
+                document.getElementById(tabName + 'Tab').classList.add('active');
+            }
+            renderModels() {
+                const c = document.getElementById('modelsList');
+                let m = this.availableModels.slice();
+                if (this.selectedCompany !== 'all') m = m.filter((x) => x.provider.toLowerCase().includes(this.selectedCompany));
+                if (this.searchQuery) { const q = this.searchQuery.toLowerCase(); m = m.filter((x) => x.name.toLowerCase().includes(q) || x.provider.toLowerCase().includes(q)); }
+                if (this.currentFilter !== 'all') m = m.filter((x) => x.category.includes(this.currentFilter));
+                c.innerHTML = m.map((x) => `<div class="model-card ${this.currentModel && this.currentModel.name === x.name ? 'active' : ''}" data-model="${x.name}"><div class="model-name">${x.name}</div><div class="model-meta">${x.provider} • ${Math.round(x.contextWindow / 1000)}K ctx • ${x.speed}</div></div>`).join('');
+                c.querySelectorAll('.model-card').forEach((card) => card.addEventListener('click', () => { this.currentModel = this.availableModels.find((x) => x.name === card.dataset.model); this.updateModelBadge(); this.renderModels(); this.addMessage(`Model switched to ${this.currentModel.name}.`, 'assistant'); }));
+            }
+            updateModelBadge() { document.getElementById('currentModelBadge').textContent = this.currentModel ? this.currentModel.name : 'No Model'; }
+            renderActors() {
+                const t = document.getElementById('actorTree');
+                t.innerHTML = this.actors.map((a) => `<div class="actor-item ${this.selectedActor === a.id ? 'active' : ''}" data-id="${a.id}"><strong>${a.name}</strong><br /><span class="subtle">${a.type} @ (${a.location.x}, ${a.location.y}, ${a.location.z})</span></div>`).join('');
+                t.querySelectorAll('.actor-item').forEach((i) => i.addEventListener('click', () => { this.selectedActor = parseInt(i.dataset.id, 10); this.renderActors(); this.drawViewport(); }));
+                const lights = this.actors.filter((a) => a.type === 'Light').length;
+                const meshes = this.actors.filter((a) => a.type === 'StaticMesh').length;
+                document.getElementById('sceneStats').innerHTML = `<div class="stat-item">Total Actors: ${this.actors.length}</div><div class="stat-item">Lights: ${lights}</div><div class="stat-item">Static Meshes: ${meshes}</div>`;
+            }
+            drawViewport() {
+                const canvas = document.getElementById('viewportCanvas');
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width, h = canvas.height;
+                ctx.fillStyle = '#0f1722'; ctx.fillRect(0, 0, w, h);
+                ctx.strokeStyle = 'rgba(254,96,81,0.12)';
+                for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+                for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+                const ox = w / 2, oy = h / 2;
+                this.actors.forEach((a) => {
+                    const px = ox + a.location.x / 6, py = oy - a.location.z / 6;
+                    ctx.fillStyle = this.selectedActor === a.id ? '#ffbf57' : '#FE6051';
+                    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#f4f7fb'; ctx.font = '11px Segoe UI'; ctx.fillText(a.name, px + 8, py - 6);
+                });
+            }
+            addMessage(content, sender) {
+                const box = document.getElementById('chatMessages');
+                const div = document.createElement('div');
+                div.className = `msg ${sender}`;
+                div.innerHTML = `<div class="avatar">${sender === 'assistant' ? 'AIRD' : 'YOU'}</div><div class="bubble">${this.formatMessage(content)}</div>`;
+                box.appendChild(div); box.scrollTop = box.scrollHeight;
+            }
+            formatMessage(text) {
+                return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/```([\s\S]*?)```/g, '<div class="code-block"><pre>$1</pre></div>').replace(/\n/g, '<br />');
+            }
+            autoResize() {
+                const input = document.getElementById('chatInput'); input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 130) + 'px';
+            }
+            sendMessage() {
+                const input = document.getElementById('chatInput');
+                const text = input.value.trim();
+                if (!text || this.isProcessing) return;
+                input.value = ''; input.style.height = '42px'; this.processCommand(text);
+            }
+            async processCommand(text) {
+                this.isProcessing = true;
+                const start = Date.now();
+                this.addMessage(text, 'user');
+                this.analytics.totalMessages += 1;
+                try {
+                    const reply = await this.callRpc('execute_command', {
+                        text,
+                        model: this.currentModel ? this.currentModel.name : 'Unknown',
+                        has_image: Boolean(this.attachedImage),
+                        image_base64: this.attachedImage ? String(this.attachedImage).split(',').pop() : null
+                    });
+                    this.addMessage(reply && reply.message ? reply.message : 'Demo Mode - API key required for live calls', 'assistant');
+                } catch {
+                    this.addMessage(this.fallbackResponse(text), 'assistant');
+                }
+                if (this.attachedImage) this.removeVisionAttachment();
+                const elapsed = Date.now() - start;
+                this.analytics.responseTimes.push(elapsed);
+                this.analytics.totalTokens += Math.floor(text.length / 4) + 28;
+                this.updateAnalytics();
+                this.isProcessing = false;
+            }
+            fallbackResponse(text) {
+                const lower = text.toLowerCase();
+                if (lower.includes('create') && lower.includes('cube')) return 'Demo Mode - API key required for live calls\n\nSuggested action: create a red cube at (0,0,100).';
+                if (lower.includes('analyze')) return `Scene snapshot: ${this.actors.length} actors loaded. MCP connection is currently unavailable.`;
+                return 'Demo Mode - API key required for live calls';
+            }
+            updateAnalytics() {
+                const avg = this.analytics.responseTimes.length ? Math.round(this.analytics.responseTimes.reduce((a, b) => a + b, 0) / this.analytics.responseTimes.length) : 0;
+                const mins = Math.max(1, Math.floor((Date.now() - this.analytics.sessionStart) / 60000));
+                document.getElementById('totalMessages').textContent = this.analytics.totalMessages;
+                document.getElementById('totalTokens').textContent = this.analytics.totalTokens.toLocaleString();
+                document.getElementById('avgResponseTime').textContent = avg + 'ms';
+                document.getElementById('sessionDuration').textContent = mins + 'm';
+            }
+            attachImage() {
+                const input = document.createElement('input');
+                input.type = 'file'; input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => { this.attachedImage = ev.target.result; document.getElementById('visionImage').src = this.attachedImage; document.getElementById('visionPreview').classList.add('active'); };
+                    reader.readAsDataURL(file);
+                };
+                input.click();
+            }
+            captureScreenshot() {
+                const canvas = document.getElementById('viewportCanvas');
+                this.attachedImage = canvas.toDataURL('image/png');
+                document.getElementById('visionImage').src = this.attachedImage;
+                document.getElementById('visionPreview').classList.add('active');
+                this.addMessage('Viewport screenshot captured.', 'assistant');
+            }
+            removeVisionAttachment() { this.attachedImage = null; document.getElementById('visionPreview').classList.remove('active'); }
+            insertCodeTemplate() {
+                const input = document.getElementById('chatInput');
+                const snippet = '```cpp\n// AIRD command snippet\nFVector Location(0,0,100);\n```';
+                input.value = (input.value ? input.value + '\n' : '') + snippet;
+                this.autoResize(); input.focus();
+            }
+            runAgents() { this.addMessage('Agent collaboration executed: Code + Scene + Tools pipelines are synchronized.', 'assistant'); }
+            installExamplePlugin() { this.plugins.push({ name: 'Code Optimizer', description: 'Enhances static analysis and command suggestions.' }); this.renderPlugins(); }
+            renderPlugins() {
+                const holder = document.getElementById('pluginsList');
+                if (!this.plugins.length) { holder.innerHTML = '<div class="plugin-item">No plugins installed.</div>'; return; }
+                holder.innerHTML = this.plugins.map((p) => `<div class="plugin-item"><strong>${p.name}</strong><br /><span class="subtle">${p.description}</span></div>`).join('');
+            }
+            startSuggestions() {
+                const suggestions = [
+                    'Create a red cube at 0,0,100',
+                    'Analyze the scene',
+                    'Generate a blueprint from this prompt',
+                    'Capture viewport and explain composition'
+                ];
+                const bar = document.getElementById('suggestionsBar');
+                bar.innerHTML = suggestions.map((s) => `<button class="btn" data-suggestion="${s.replace(/"/g, '&quot;')}">${s}</button>`).join('');
+                bar.querySelectorAll('[data-suggestion]').forEach((btn) => btn.addEventListener('click', () => this.processCommand(btn.dataset.suggestion)));
+            }
+            saveApiKey() {
+                const key = (document.getElementById('apiKeyInput').value || '').trim();
+                if (key.length < 10) { this.apiValid = false; this.addMessage('Invalid API key format.', 'assistant'); return; }
+                localStorage.setItem('aird_api_key', key); this.apiValid = true; this.addMessage('API key saved.', 'assistant');
+            }
+            restoreApiKey() {
+                const key = localStorage.getItem('aird_api_key'); this.apiValid = Boolean(key);
+                if (key) document.getElementById('apiKeyInput').value = '••••••••••••••••';
+            }
+connectLocalModel() {
+                localStorage.setItem('local_model_endpoint', 'http://localhost:11434');
+                localStorage.setItem('local_model_name', 'llama3');
+                this.addMessage('Local model endpoint saved: http://localhost:11434 (llama3).', 'assistant');
+            }
+            toggleEngine(enabled) {
+                const statusEl = document.getElementById('engineStatus');
+                const toggleEl = document.getElementById('engineToggle');
+                if (toggleEl) toggleEl.checked = Boolean(enabled);
+                if (enabled) {
+                    this.engineRunning = true;
+                    statusEl.textContent = 'ONLINE';
+                    statusEl.classList.add('active');
+                    this.connectWebSocket();
+                    this.addMessage('AIRD Engine started. MCP Server and Scene Sync activated.', 'assistant');
+                } else {
+                    this.engineRunning = false;
+                    statusEl.textContent = 'OFFLINE';
+                    statusEl.classList.remove('active');
+                    if (this.ws) { this.ws.close(); this.ws = null; }
+                    this.addMessage('AIRD Engine stopped. MCP Server deactivated.', 'assistant');
+                }
+            }
+            connectWebSocket() {
+                if (!this.engineRunning) return;
+                this.wsUrl = (document.getElementById('mcpServer').value || this.wsUrl || 'ws://localhost:8765').trim();
+                localStorage.setItem('aird_mcp_server', this.wsUrl);
+                try {
+                    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
+                    this.ws = new WebSocket(this.wsUrl);
+                    this.ws.onopen = () => { if (this.engineRunning) document.getElementById('apiStatus').classList.add('connected'); };
+                    this.ws.onclose = () => { document.getElementById('apiStatus').classList.remove('connected'); if (this.engineRunning) setTimeout(() => this.connectWebSocket(), 2500); };
+                    this.ws.onerror = () => { document.getElementById('apiStatus').classList.remove('connected'); };
+                    this.ws.onmessage = (evt) => {
+                        let data; try { data = JSON.parse(evt.data); } catch { return; }
+                        if (data && Object.prototype.hasOwnProperty.call(data, 'id') && this.pendingRpc.has(data.id)) {
+                            const handler = this.pendingRpc.get(data.id); this.pendingRpc.delete(data.id);
+                            if (data.error) handler.reject(data.error); else handler.resolve(data.result);
+                        }
+                    };
+                } catch {
+                    document.getElementById('apiStatus').classList.remove('connected');
+                }
+            }
+            getRpcAuthToken() {
+                const envToken = (typeof window.AIRD_RPC_AUTH_TOKEN === 'string' ? window.AIRD_RPC_AUTH_TOKEN : '').trim();
+                if (envToken) return envToken;
+                return (localStorage.getItem('aird_rpc_auth_token') || '').trim();
+            }
+            enrichRpcParams(method, params) {
+                const payloadParams = { ...(params || {}) };
+                const mutatingMethods = new Set(['update_runtime_config', 'clear_history', 'apply_scene_perception_fix']);
+                if (!mutatingMethods.has(String(method || '').trim())) return payloadParams;
+                if (payloadParams.auth_token || payloadParams.token || payloadParams.rpc_token) return payloadParams;
+                const token = this.getRpcAuthToken();
+                if (token) payloadParams.auth_token = token;
+                return payloadParams;
+            }
+            callRpc(method, params) {
+                return new Promise((resolve, reject) => {
+                    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) { reject(new Error('MCP disconnected')); return; }
+                    const payloadParams = this.enrichRpcParams(method, params);
+                    const id = this.rpcId++;
+                    this.pendingRpc.set(id, { resolve, reject });
+                    this.ws.send(JSON.stringify({ jsonrpc: '2.0', id, method, params: payloadParams }));
+                    setTimeout(() => {
+                        if (this.pendingRpc.has(id)) { this.pendingRpc.delete(id); reject(new Error('RPC timeout')); }
+                    }, 15000);
+                });
+            }
+        }
+        }
+        const airdPro = new AIRDApp();
+
+        // Scene Visualization Widget
+        class SceneVizWidget {
+            constructor() {
+                this.widget = null;
+                this.createWidget();
+            }
+
+            createWidget() {
+                const widgetHtml = `
+                <div id="scene-viz-widget" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; max-height: 500px; background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999; color: #fff;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0; font-size: 16px;">Scene Analysis</h3>
+                        <button id="closeVizBtn" style="background: none; border: none; color: #888; cursor: pointer; font-size: 20px;">&times;</button>
+                    </div>
+                    <canvas id="scene-pie-chart" width="360" height="200"></canvas>
+                    <div id="scene-stats" style="margin: 15px 0; padding: 10px; background: #16213e; border-radius: 8px;"></div>
+                    <div style="margin-bottom: 10px;">
+                        <select id="categoryFilter" style="width: 100%; padding: 8px; background: #16213e; color: #fff; border: 1px solid #333; border-radius: 4px;">
+                            <option value="">Select Category</option>
+                            <option value="Light">Light</option>
+                            <option value="StaticMesh">StaticMesh</option>
+                            <option value="DynamicActor">DynamicActor</option>
+                            <option value="Volume">Volume</option>
+                            <option value="Player">Player</option>
+                            <option value="Camera">Camera</option>
+                            <option value="Audio">Audio</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div id="scene-actor-list" style="max-height: 150px; overflow-y: auto; background: #16213e; border-radius: 8px; padding: 10px;"></div>
+                </div>`;
+                document.body.insertAdjacentHTML('beforeend', widgetHtml);
+                this.widget = document.getElementById('scene-viz-widget');
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.getElementById('closeVizBtn').addEventListener('click', () => this.hide());
+                document.getElementById('categoryFilter').addEventListener('change', (e) => this.loadActors(e.target.value));
+            }
+
+            async show() {
+                this.widget.style.display = 'block';
+                await this.loadPieChart();
+                await this.loadStats();
+            }
+
+            hide() {
+                this.widget.style.display = 'none';
+            }
+
+            async loadPieChart() {
+                try {
+                    const result = await this.callRpc('get_scene_quick_summary', {});
+                    if (result && result.result) {
+                        this.renderPieChart(result.result.actor_counts || {});
+                    }
+                } catch (e) {
+                    console.error('Failed to load pie chart:', e);
+                }
+            }
+
+            async loadStats() {
+                try {
+                    const result = await this.callRpc('scan_scene', {});
+                    if (result && result.result) {
+                        const stats = document.getElementById('scene-stats');
+                        const r = result.result;
+                        const vis = r.visual_confirmation || {};
+                        stats.innerHTML = `
+                            <div style="display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap;">
+                                <div><div style="font-size: 24px; color: #4ade80;">${r.total_actors}</div><div style="font-size: 10px; color: #888;">Total Actors</div></div>
+                                <div><div style="font-size: 24px; color: #fbbf24;">${r.lights?.length || 0}</div><div style="font-size: 10px; color: #888;">Lights</div></div>
+                                <div><div style="font-size: 24px; color: #60a5fa;">${vis.meshes_found || 0}</div><div style="font-size: 10px; color: #888;">Static Meshes</div></div>
+                                <div><div style="font-size: 24px; color: #a78bfa;">${vis.actors_selected || 0}</div><div style="font-size: 10px; color: #888;">Selected (Glow)</div></div>
+                                <div><div style="font-size: 24px; color: #f472b6;">${r.scan_duration_ms?.toFixed(1) || 0}ms</div><div style="font-size: 10px; color: #888;">Scan Time</div></div>
+                            </div>
+                            ${r.error_message ? '<div style="color: #f87171; font-size: 11px; margin-top: 5px;">' + r.error_message + '</div>' : ''}
+                        `;
+                    }
+                } catch (e) {
+                    console.error('Failed to load stats:', e);
+                }
+            }
+
+            async loadActors(category) {
+                if (!category) {
+                    document.getElementById('scene-actor-list').innerHTML = '';
+                    return;
+                }
+                try {
+                    const result = await this.callRpc('get_scene_actors', { category: category });
+                    const list = document.getElementById('scene-actor-list');
+                    if (result && result.result) {
+                        list.innerHTML = result.result.map(a => 
+                            `<div style="padding: 5px; border-bottom: 1px solid #333; font-size: 12px;">
+                                <strong>${a.name}</strong>
+                                <span style="color: #888;">(${a.class})</span>
+                            </div>`
+                        ).join('') || '<div style="color: #888; padding: 10px;">No actors found</div>';
+                    }
+                } catch (e) {
+                    console.error('Failed to load actors:', e);
+                }
+            }
+
+            renderPieChart(data) {
+                const canvas = document.getElementById('scene-pie-chart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const colors = {
+                    Light: '#FFD700', StaticMesh: '#4169E1', DynamicActor: '#32CD32',
+                    Volume: '#9370DB', Player: '#FF4500', Camera: '#00CED1', Audio: '#FF69B4', Other: '#808080'
+                };
+                const labels = Object.keys(data).filter(k => data[k] > 0);
+                const values = labels.map(l => data[l]);
+                const total = values.reduce((a, b) => a + b, 0);
+                let startAngle = -Math.PI / 2;
+                labels.forEach((label, i) => {
+                    const sliceAngle = (values[i] / total) * 2 * Math.PI;
+                    ctx.beginPath();
+                    ctx.moveTo(180, 100);
+                    ctx.arc(180, 100, 80, startAngle, startAngle + sliceAngle);
+                    ctx.fillStyle = colors[label] || '#808080';
+                    ctx.fill();
+                    startAngle += sliceAngle;
+                });
+                // Legend
+                ctx.font = '11px Arial';
+                labels.forEach((label, i) => {
+                    const y = 200 + (i * 14);
+                    ctx.fillStyle = colors[label] || '#808080';
+                    ctx.fillRect(10, y, 10, 10);
+                    ctx.fillStyle = '#fff';
+                    ctx.fillText(label + ': ' + data[label], 25, y + 9);
+                });
+            }
+
+            callRpc(method, params) {
+                return airdPro.callRpc(method, params);
+            }
+        }
+
+        const sceneVizWidget = new SceneVizWidget();
+    </script>
+</body>
+</html>

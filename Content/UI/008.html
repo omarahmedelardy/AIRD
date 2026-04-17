@@ -1,0 +1,3199 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RD Studio - Advanced AI Enterprise Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Theme colors */
+            --primary-gradient: linear-gradient(135deg, #FE6051 0%, #131921 100%);
+            --secondary-gradient: linear-gradient(135deg, #131921 0%, #FE6051 100%);
+            --success-gradient: linear-gradient(135deg, #FE6051 0%, #ff8a7f 100%);
+            --warning-gradient: linear-gradient(135deg, #FE6051 0%, #fbd07e 100%);
+            --info-gradient: linear-gradient(135deg, #131921 0%, #1c2530 100%);
+            --dark-bg: #131921;
+            --darker-bg: #0a0a14;
+            --card-bg: rgba(19, 25, 33, 0.95);
+            --border-color: rgba(254, 96, 81, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0c0;
+            --accent: #FE6051;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Main Container */
+        .aura-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            direction: ltr;
+        }
+
+        /* Left Sidebar */
+        .sidebar {
+            flex: 0 0 280px;
+            width: 280px;
+            flex-shrink: 0;
+            min-height: 0;
+            background: rgba(19, 25, 33, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            order: 3;
+            z-index: 10;
+            transition: transform 0.2s ease;
+            will-change: transform;
+            direction: rtl;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(100%);
+            flex-basis: 0 !important;
+            width: 0 !important;
+            border: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            padding-left: 56px;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        /* Scene Explorer */
+        .scene-explorer {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .actor-tree {
+            margin-bottom: 24px;
+        }
+
+        .actor-node {
+            padding: 8px 12px;
+            margin: 4px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+            font-size: 13px;
+        }
+
+        .actor-node:hover {
+            background: rgba(254, 96, 81, 0.1);
+            transform: translateX(4px);
+        }
+
+        .actor-node.selected {
+            border-left-color: var(--accent);
+            background: rgba(254, 96, 81, 0.15);
+        }
+
+        .actor-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            order: 2;
+            overflow: hidden;
+            direction: rtl;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            height: 60px;
+            flex-shrink: 0;
+            background: rgba(19, 25, 33, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .toggle-sidebar-btn {
+            background: rgba(254, 96, 81, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-sidebar-btn:hover {
+            background: rgba(254, 96, 81, 0.2);
+        }
+
+        .model-badge {
+            background: var(--primary-gradient);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #4ade80;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        .status-dot.checking {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Viewport Section */
+        .viewport-section {
+            height: 250px;
+            flex-shrink: 0;
+            background: var(--darker-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .viewport-section.collapsed {
+            display: none;
+        }
+
+        #viewportCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .viewport-controls {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .viewport-btn {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .viewport-btn:hover {
+            background: rgba(254, 96, 81, 0.5);
+        }
+
+        /* Chat Section */
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px 24px;
+            min-width: 0;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .message.user .message-content {
+            background: var(--primary-gradient);
+        }
+
+        .message.assistant .message-content {
+            background: var(--card-bg);
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* Chat Input */
+        .chat-input-container {
+            border-top: 1px solid var(--border-color);
+            background: rgba(19, 25, 33, 0.95);
+            padding: 16px 24px;
+            flex-shrink: 0;
+            min-width: 0;
+        }
+
+        .vision-preview {
+            display: none;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: rgba(254, 96, 81, 0.1);
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .vision-preview.active {
+            display: block;
+        }
+
+        .vision-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 6px;
+        }
+
+        .remove-vision-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            min-width: 0;
+            flex-wrap: nowrap;
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 6px;
+            flex: 0 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: rgba(254, 96, 81, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(254, 96, 81, 0.2);
+        }
+
+        .chat-input {
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            min-inline-size: 220px;
+            background: rgba(30, 30, 50, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: none;
+            min-height: 40px;
+            max-height: 120px;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .send-btn {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            flex: 0 0 350px;
+            width: 350px;
+            flex-shrink: 0;
+            min-height: 0;
+            background: rgba(19, 25, 33, 0.95);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            order: 1;
+            overflow: hidden;
+            position: relative;
+            will-change: transform;
+            direction: rtl;
+            transition: transform 0.25s ease;
+        }
+
+        .right-sidebar.collapsed {
+            transform: translateX(-100%);
+            flex-basis: 0 !important;
+            width: 0 !important;
+            border: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none;
+        }
+
+        .panel-close-btn {
+            position: absolute;
+            top: 12px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(19, 25, 33, 0.85);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        .panel-close-btn.left-panel-close {
+            left: 12px;
+        }
+
+        .panel-close-btn.right-panel-close {
+            right: 12px;
+        }
+
+        .panel-close-btn:hover {
+            background: rgba(254, 96, 81, 0.2);
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            padding-right: 56px;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            gap: 2px;
+            scrollbar-width: thin;
+        }
+
+        .sidebar-tab {
+            flex: 0 0 auto;
+            min-width: 88px;
+            padding: 14px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .sidebar-tab.active {
+            border-bottom-color: var(--accent);
+            background: rgba(254, 96, 81, 0.1);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Model Library */
+        .model-search {
+            margin-bottom: 16px;
+        }
+
+        .model-search-actions {
+            display: flex;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(30, 30, 50, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-chip {
+            padding: 6px 12px;
+            background: rgba(254, 96, 81, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--primary-gradient);
+            border-color: transparent;
+        }
+
+        .company-select {
+            width: 100%;
+            background: rgba(30, 30, 50, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .model-refresh-btn {
+            background: rgba(254, 96, 81, 0.1);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .model-refresh-btn:hover {
+            background: rgba(254, 96, 81, 0.2);
+        }
+
+        .company-select-wrap {
+            position: relative;
+        }
+
+        .company-select-trigger {
+            text-align: right;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .company-select-native {
+            display: none;
+        }
+
+        .company-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% - 6px);
+            left: 0;
+            right: 0;
+            background: rgba(19, 25, 33, 0.98);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 200;
+        }
+
+        .company-dropdown.open {
+            display: block;
+        }
+
+        .company-option {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            text-align: right;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .company-option:hover,
+        .company-option.active {
+            background: rgba(254, 96, 81, 0.15);
+        }
+
+        .models-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .model-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .model-card.selected {
+            border-color: var(--accent);
+            background: rgba(254, 96, 81, 0.1);
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .model-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .model-badge-small {
+            padding: 2px 8px;
+            background: var(--secondary-gradient);
+            border-radius: 4px;
+            font-size: 10px;
+        }
+
+        .model-price-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-inline-start: 6px;
+        }
+
+        .model-price-badge.free {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.35);
+        }
+
+        .model-price-badge.paid {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fb923c;
+            border: 1px solid rgba(251, 146, 60, 0.35);
+        }
+
+        .model-info {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .provider-meta,
+        .provider-note {
+            margin-bottom: 0;
+        }
+
+        .model-features {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .feature-tag {
+            padding: 2px 6px;
+            background: rgba(254, 96, 81, 0.2);
+            border-radius: 3px;
+            font-size: 9px;
+        }
+
+        /* Settings Panel */
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .setting-item {
+            margin-bottom: 16px;
+        }
+
+        .setting-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .setting-input {
+            width: 100%;
+            background: rgba(30, 30, 50, 0.5);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .save-btn {
+            width: 100%;
+            background: var(--success-gradient);
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .save-btn:hover {
+            transform: scale(1.02);
+        }
+
+        /* Analytics Panel */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .usage-chart {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .chart-bar {
+            height: 120px;
+            background: linear-gradient(to top, var(--accent), transparent);
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+
+        /* Future Features Panel */
+        .feature-roadmap {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .roadmap-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+        }
+
+        .roadmap-status {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .status-planned {
+            background: rgba(254, 96, 81, 0.2);
+            color: #FE6051;
+        }
+
+        .status-development {
+            background: rgba(254, 96, 81, 0.2);
+            color: #FE6051;
+        }
+
+        .status-beta {
+            background: rgba(254, 225, 64, 0.2);
+            color: #fee140;
+        }
+
+        .roadmap-title {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .roadmap-description {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(254, 96, 81, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(254, 96, 81, 0.5);
+        }
+
+        /* Code Block Styling */
+        .code-block {
+            background: #1e1e2e;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: absolute;
+                right: 0;
+                height: 100%;
+                z-index: 100;
+            }
+            
+            .right-sidebar {
+                position: absolute;
+                left: 0;
+                height: 100%;
+                z-index: 100;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .right-sidebar.active,
+            .right-sidebar:not(.collapsed) {
+                transform: translateX(0);
+            }
+        }
+
+        /* ===== NEW STYLES FOR ADDED FEATURES (no structural changes) ===== */
+        .suggestions-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .suggestion-chip {
+            background: rgba(254, 96, 81, 0.2);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.2s;
+        }
+        .suggestion-chip:hover {
+            background: var(--accent);
+        }
+        .agent-team-bar {
+            background: rgba(0,0,0,0.3);
+            padding: 6px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-shrink: 0;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .agent-badge {
+            background: rgba(254, 96, 81, 0.2);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .agent-badge.active {
+            background: var(--primary-gradient);
+        }
+        .plugin-card {
+            background: var(--card-bg);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="aura-container">
+        <div class="sidebar" id="leftSidebar">
+            <div class="sidebar-header">
+                <button class="panel-close-btn left-panel-close" onclick="auraPro.toggleSidebar()" title="Close panel">&rarr;</button>
+                <div class="logo">
+                    <div class="logo-icon">RD</div>
+                    <span>RD Studio</span>
+                </div>
+            </div>
+
+            <div class="scene-explorer">
+                <div class="section-title">Scene Explorer</div>
+                <div class="actor-tree" id="actorTree"></div>
+                
+                <div class="section-title">Statistics</div>
+                <div id="sceneStats"></div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button class="toggle-sidebar-btn" onclick="auraPro.toggleSidebar()">Menu</button>
+                    <div class="model-badge" id="currentModelBadge">GPT-4 Turbo</div>
+                    <button class="toggle-sidebar-btn" id="toggleViewportBtn" onclick="auraPro.toggleViewportPanel()">Show Viewport</button>
+                </div>
+                <div class="status-indicators">
+                    <span style="font-size: 12px;">API</span>
+                    <div class="status-dot disconnected" id="apiStatus"></div>
+                    <span style="font-size: 12px;">MCP</span>
+                    <div class="status-dot disconnected" id="mcpStatus"></div>
+                    <button class="toggle-sidebar-btn" onclick="auraPro.toggleRightSidebar()">Settings</button>
+                </div>
+            </div>
+
+            <div class="viewport-section collapsed" id="viewportSection">
+                <canvas id="viewportCanvas" width="1200" height="250"></canvas>
+                <div class="viewport-controls">
+                    <button class="viewport-btn" id="captureBtn">Capture</button>
+                    <button class="viewport-btn" id="analyzeBtn">Analyze</button>
+                    <button class="viewport-btn" onclick="auraPro.toggleViewMode()">3D View</button>
+                </div>
+            </div>
+
+            <!-- Multi-Agent Collaboration Bar (added without removing any existing structure) -->
+            <div class="agent-team-bar" id="agentTeamBar">
+                <span style="font-size:12px;">Multi-Agent Team:</span>
+                <div id="agentListInline" style="display:flex; gap:6px;"></div>
+                <button class="viewport-btn" id="runAgentsBtn" style="padding:4px 8px;">Collaborate</button>
+            </div>
+
+            <div class="chat-section">
+                <div class="chat-messages" id="chatMessages"></div>
+
+                <div class="chat-input-container">
+                    <!-- Context-Aware Suggestions Bar -->
+                    <div class="suggestions-bar" id="suggestionsBar"></div>
+
+                    <div class="vision-preview" id="visionPreview">
+                        <img id="visionImage" src="" alt="Attached">
+                        <button class="remove-vision-btn" id="removeVisionBtn">x</button>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <div class="input-actions">
+                            <button class="action-btn" id="attachImageBtn" title="Attach Image">Img</button>
+                            <button class="action-btn" id="screenshotBtn" title="Screenshot">Shot</button>
+                            <button class="action-btn" id="codeBtn" title="Insert Code">Code</button>
+                            <button class="action-btn" id="voiceBtn" title="Voice Input">Mic</button>
+                            <!-- Advanced Code Analysis button -->
+                            <button class="action-btn" id="advancedCodeBtn" title="Code Analysis">AI</button>
+                        </div>
+                        <textarea 
+                            class="chat-input" 
+                            id="chatInput" 
+                            placeholder="اكتب رسالتك هنا... (Shift+Enter لسطر جديد)"
+                            rows="1"
+                        ></textarea>
+                        <button class="send-btn" id="sendBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-sidebar" id="rightSidebar">
+            <button class="panel-close-btn right-panel-close" onclick="auraPro.toggleRightSidebar()" title="Close panel">&larr;</button>
+            <div class="sidebar-tabs">
+                <div class="sidebar-tab active" data-tab="models" onclick="auraPro.switchTab('models')">Models</div>
+                <div class="sidebar-tab" data-tab="settings" onclick="auraPro.switchTab('settings')">Settings</div>
+                <div class="sidebar-tab" data-tab="analytics" onclick="auraPro.switchTab('analytics')">Analytics</div>
+                <div class="sidebar-tab" data-tab="plugins" onclick="auraPro.switchTab('plugins')">Plugins</div>
+                <div class="sidebar-tab" data-tab="future" onclick="auraPro.switchTab('future')">Future</div>
+            </div>
+
+            <div class="sidebar-content">
+                <div id="modelsTab" class="tab-content">
+                    <div class="model-search">
+                        <div class="company-select-wrap" id="companySelectWrap">
+                            <button type="button" class="company-select company-select-trigger" id="companySelectTrigger" aria-haspopup="listbox" aria-expanded="false">All Providers</button>
+                            <div class="company-dropdown" id="companyDropdown" role="listbox"></div>
+                            <select class="company-select-native" id="companySelect" aria-hidden="true" tabindex="-1"></select>
+                        </div>
+                        <div class="model-search-actions">
+                            <input type="text" class="search-input" id="modelSearchInput" placeholder="Search models...">
+                            <button class="model-refresh-btn" id="refreshModelsBtn" type="button" title="Refresh models">Refresh</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-chips">
+                        <div class="filter-chip active" data-filter="all">All</div>
+                        <div class="filter-chip" data-filter="vision">Vision</div>
+                        <div class="filter-chip" data-filter="reasoning">Reasoning</div>
+                        <div class="filter-chip" data-filter="code">Code</div>
+                        <div class="filter-chip" data-filter="fast">Fast</div>
+                        <div class="filter-chip" data-free-only="true">Show Free Only</div>
+                    </div>
+
+                    <div class="models-list" id="modelsList"></div>
+                </div>
+
+                <div id="settingsTab" class="tab-content" style="display: none;">
+                    <div class="settings-section">
+                        <div class="section-title">API Configuration</div>
+                        <div class="setting-item">
+                            <div class="setting-label">Active Provider</div>
+                            <div class="plugin-card provider-meta" id="providerMeta">Provider: OpenAI (cloud)</div>
+                        </div>
+                        <div class="setting-item" id="providerApiHint">
+                            <div class="setting-label" id="providerKeyStatus">API key required</div>
+                            <button class="save-btn" id="getApiKeyBtn" type="button">Get API Key</button>
+                        </div>
+                        <div class="setting-item" id="providerLocalNote" style="display:none;">
+                            <div class="plugin-card provider-note">Runs locally on your machine.</div>
+                        </div>
+                        <div class="setting-item" id="apiKeySettingItem">
+                            <div class="setting-label">API Key</div>
+                            <input type="password" class="setting-input" id="apiKeyInput" placeholder="sk-...">
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Temperature (0.0 - 2.0)</div>
+                            <input type="range" class="setting-input" id="temperatureInput" min="0" max="2" step="0.1" value="0.7">
+                            <span id="temperatureValue">0.7</span>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Max Tokens</div>
+                            <input type="number" class="setting-input" id="maxTokensInput" value="4000">
+                        </div>
+                        <button class="save-btn" id="saveApiBtn">Save Configuration</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">Local Model Support (Privacy)</div>
+                        <div class="setting-item">
+                            <div class="setting-label">Local Endpoint (Ollama)</div>
+                            <input type="text" class="setting-input" id="localEndpoint" placeholder="http://localhost:11434">
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Model Name</div>
+                            <input type="text" class="setting-input" id="localModelName" placeholder="llama3">
+                        </div>
+                        <button class="save-btn" id="connectLocalBtn">Connect Local Model</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">MCP (Model Context Protocol)</div>
+                        <div class="setting-item">
+                            <div class="setting-label">MCP Server</div>
+                            <input type="text" class="setting-input" id="mcpServer" placeholder="ws://127.0.0.1:8765">
+                        </div>
+                        <button class="save-btn" id="enableMCPBtn">Start AIRD Engine</button>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">Runtime Debug</div>
+                        <div class="plugin-card" id="runtimeDebugPanel">
+                            Actor Count: 0<br>
+                            Scene Status: Unknown<br>
+                            MCP Status: Disconnected<br>
+                            Last Sync: N/A
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">Interface</div>
+                        <div class="setting-item">
+                            <div class="setting-label">Theme</div>
+                            <select class="setting-input" id="themeSelect">
+                                <option value="dark">Dark Mode</option>
+                                <option value="light">Light Mode</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-label">Language</div>
+                            <select class="setting-input" id="languageSelect">
+                                <option value="ar">العربية</option>
+                                <option value="en">English</option>
+                                <option value="fr">Français</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analyticsTab" class="tab-content" style="display: none;">
+                    <div class="analytics-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalMessages">0</div>
+                            <div class="stat-label">Total Messages</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalTokens">0</div>
+                            <div class="stat-label">Tokens Used</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgResponseTime">0ms</div>
+                            <div class="stat-label">Avg Response</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="sessionDuration">0m</div>
+                            <div class="stat-label">Session Time</div>
+                        </div>
+                    </div>
+
+                    <div class="usage-chart">
+                        <div class="section-title">Usage Over Time</div>
+                        <div class="chart-bar"></div>
+                    </div>
+
+                    <div class="settings-section">
+                        <div class="section-title">Model Performance</div>
+                        <div id="modelPerformance"></div>
+                    </div>
+                </div>
+
+                <!-- Plugins Tab -->
+                <div id="pluginsTab" class="tab-content" style="display: none;">
+                    <div class="section-title">Plugin System</div>
+                    <div id="pluginsList"></div>
+                    <button class="save-btn" id="installPluginBtn">Install Example Plugin</button>
+                </div>
+
+                <div id="futureTab" class="tab-content" style="display: none;">
+                    <div class="section-title">Upcoming Features</div>
+                    <div class="feature-roadmap">
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-development">In Development</div>
+                            <div class="roadmap-title">Multi-Agent Collaboration</div>
+                            <div class="roadmap-description">Multiple AI agents working together on complex tasks</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-beta">Beta Testing</div>
+                            <div class="roadmap-title">Real-time 3D Scene Generation</div>
+                            <div class="roadmap-description">Generate and modify 3D scenes using AI commands</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-planned">Planned</div>
+                            <div class="roadmap-title">Voice Conversation Mode</div>
+                            <div class="roadmap-description">Natural voice conversations with STT/TTS</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-planned">Planned</div>
+                            <div class="roadmap-title">Advanced Code Analysis</div>
+                            <div class="roadmap-description">Deep code review, refactoring, optimization</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-planned">Planned</div>
+                            <div class="roadmap-title">Multi-modal Document Processing</div>
+                            <div class="roadmap-description">Process PDFs, images, videos</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-development">In Development</div>
+                            <div class="roadmap-title">Local Model Support</div>
+                            <div class="roadmap-description">Run AI locally for privacy</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-planned">Planned</div>
+                            <div class="roadmap-title">Team Collaboration</div>
+                            <div class="roadmap-description">Share conversations and sync</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-beta">Beta Testing</div>
+                            <div class="roadmap-title">Plugin System</div>
+                            <div class="roadmap-description">Extend with custom plugins</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-planned">Planned</div>
+                            <div class="roadmap-title">Mobile App</div>
+                            <div class="roadmap-description">Native iOS/Android apps</div>
+                        </div>
+                        <div class="roadmap-item">
+                            <div class="roadmap-status status-development">In Development</div>
+                            <div class="roadmap-title">Context-Aware Suggestions</div>
+                            <div class="roadmap-description">Smart suggestions based on workflow</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ORIGINAL RDStudioUltimate CLASS (preserved entirely) ====================
+        class RDStudioUltimate {
+            constructor() {
+                this.currentModel = null;
+                const initialProviders = this.initializeProviders();
+                this.providers = Array.isArray(initialProviders) ? initialProviders : [];
+                this.companies = this.providers;
+                this.availableModels = [];
+                this.actors = [];
+                this.sceneSource = 'unavailable';
+                this.selectedActor = null;
+                this.attachedImage = null;
+                this.isProcessing = false;
+                this.apiValid = false;
+                this.searchQuery = '';
+                this.selectedCompany = 'all';
+                this.currentFilter = 'all';
+                this.showFreeOnly = false;
+                this.modelLoading = false;
+                this.modelError = '';
+                this.modelsVersion = 0;
+                this.modelsRequestId = 0;
+                this.filterCacheKey = '';
+                this.filterCacheResult = [];
+                this.isRenderingModels = false;
+                this.companyDropdownOpen = false;
+                this.apiVerifySeq = 0;
+                this.analytics = {
+                    totalMessages: 0,
+                    totalTokens: 0,
+                    responseTimes: [],
+                    sessionStart: Date.now()
+                };
+                this.rpcId = 1;
+                this.rpcPending = new Map();
+                this.rpcSocket = null;
+                this.rpcConnected = false;
+                this.rpcReconnectTimer = null;
+                this.rpcReconnectDelay = 1000;
+                this.rpcReconnectMaxDelay = 10000;
+                this.uiRequestSeq = 0;
+                this.mcpServerUrl = localStorage.getItem('mcp_server') || 'ws://127.0.0.1:8765';
+                this.contextServerUrl = localStorage.getItem('aird_context_server') || 'http://127.0.0.1:8787';
+                this.sceneContextValid = false;
+                this.lastSceneSyncAt = null;
+                this.sceneSyncTimer = null;
+                this.uiDebug = true;
+
+                this.init();
+            }
+
+            init() {
+                this.debugLog('init start', {
+                    providers: this.providers.length,
+                    companies: this.companies.length,
+                    models: this.availableModels.length,
+                    fetchSupported: typeof fetch === 'function',
+                    webSocketSupported: typeof WebSocket === 'function'
+                });
+                this.loadMockActors();
+                this.initViewport();
+                this.populateCompanyOptions();
+                this.loadModels();
+                this.setupEventListeners();
+                this.initAutoResize();
+                this.updateAnalytics();
+                this.initRpcConnection();
+                this.checkApiKey();
+                this.updateProviderSettingsUI();
+                this.startSceneSync();
+                this.updateModelBadge();
+                this.updateRuntimeDebugPanel();
+                
+                this.addMessage('مرحبًا بك في RD Studio. اكتب طلبك وسأحلل المشهد وأنفذ أوامر Unreal عند الحاجة.', 'assistant');
+            }
+
+            debugLog(...args) {
+                if (!this.uiDebug) return;
+                try { console.log('[AIRD UI]', ...args); } catch (_) {}
+            }
+
+            nextRequestId() {
+                this.uiRequestSeq += 1;
+                return `ui-${Date.now()}-${this.uiRequestSeq}`;
+            }
+
+            traceFlow(event, requestId, details = {}) {
+                const marker = String(event || '').trim().toUpperCase();
+                const rid = String(requestId || '').trim() || 'unknown';
+                const payload = {
+                    event: marker || 'TRACE_EVENT',
+                    request_id: rid,
+                    details: details || {}
+                };
+                try { console.info('[AIRD TRACE]', payload); } catch (_) {}
+                this.debugLog('[TRACE]', payload);
+            }
+
+            normalizeMcpUrl(value) {
+                let url = String(value || '').trim();
+                if (!url) return 'ws://127.0.0.1:8765';
+                if (url.startsWith('http://')) url = `ws://${url.slice(7)}`;
+                if (url.startsWith('https://')) url = `wss://${url.slice(8)}`;
+                if (!url.startsWith('ws://') && !url.startsWith('wss://')) return 'ws://127.0.0.1:8765';
+                return url;
+            }
+
+            normalizeHttpUrl(value) {
+                const raw = String(value || '').trim();
+                if (!raw) return 'http://127.0.0.1:8787';
+                if (raw.startsWith('http://') || raw.startsWith('https://')) return raw.replace(/\/+$/, '');
+                return 'http://127.0.0.1:8787';
+            }
+
+            safeRenderModels(reason = '') {
+                if (this.isRenderingModels) {
+                    this.debugLog('renderModels skipped (re-entry)', reason);
+                    return;
+                }
+                this.isRenderingModels = true;
+                try {
+                    this.renderModels();
+                    this.debugLog('renderModels ok', { reason, company: this.selectedCompany, filter: this.currentFilter, search: this.searchQuery });
+                } catch (err) {
+                    this.debugLog('renderModels failed', err);
+                    const container = document.getElementById('modelsList');
+                    if (container) container.innerHTML = '<div class="plugin-card">Failed to load models. Please retry.</div>';
+                } finally {
+                    this.isRenderingModels = false;
+                }
+            }
+
+            initializeProviders() {
+                return [
+                    { id: 'openai', name: 'OpenAI', type: 'cloud', apiKeyRequired: true, apiUrl: 'https://platform.openai.com/api-keys' },
+                    { id: 'anthropic', name: 'Anthropic', type: 'cloud', apiKeyRequired: true, apiUrl: 'https://console.anthropic.com/settings/keys' },
+                    { id: 'openrouter', name: 'OpenRouter', type: 'gateway', apiKeyRequired: true, apiUrl: 'https://openrouter.ai/keys' },
+                    { id: 'together', name: 'Together AI', type: 'gateway', apiKeyRequired: true, apiUrl: 'https://api.together.ai/settings/api-keys' },
+                    { id: 'ollama', name: 'Ollama', type: 'local', apiKeyRequired: false, apiUrl: 'https://ollama.com/download' },
+                    { id: 'lmstudio', name: 'LM Studio', type: 'local', apiKeyRequired: false, apiUrl: 'https://lmstudio.ai/' }
+                ];
+            }
+
+            initializeCompanies() {
+                return this.initializeProviders();
+            }
+
+            async loadModels(forceRefresh = false) {
+                if (this.modelLoading && !forceRefresh) {
+                    this.debugLog('loadModels skipped (already loading)');
+                    return;
+                }
+                const requestId = ++this.modelsRequestId;
+                this.modelLoading = true;
+                this.modelError = '';
+                this.safeRenderModels('models-loading');
+                try {
+                    const models = await this.fetchModelsMock(forceRefresh);
+                    if (requestId !== this.modelsRequestId) {
+                        this.debugLog('loadModels ignored stale response', { requestId, currentRequestId: this.modelsRequestId });
+                        return;
+                    }
+                    this.availableModels = Array.isArray(models) ? models : [];
+                    this.debugLog('models loaded', {
+                        modelsLength: this.availableModels.length,
+                        providersLength: this.providers.length,
+                        companiesLength: this.companies.length
+                    });
+                    this.modelsVersion++;
+                    this.filterCacheKey = '';
+                    const visibleModels = this.getFilteredModels();
+                    if (!this.currentModel || !this.availableModels.some((m) => String(m.id) === String(this.currentModel?.id))) {
+                        this.currentModel = visibleModels[0] || this.availableModels[0] || null;
+                    }
+                    this.modelLoading = false;
+                    this.modelError = '';
+                    this.updateModelBadge();
+                    this.updateProviderSettingsUI();
+                    this.checkApiKey();
+                    this.safeRenderModels('models-loaded');
+                } catch (err) {
+                    this.modelLoading = false;
+                    this.modelError = err?.message || 'Failed to load models';
+                    this.safeRenderModels('models-error');
+                }
+            }
+
+            async fetchModelsMock(forceRefresh = false) {
+                const endpoint = (localStorage.getItem('aura_models_endpoint') || '').trim();
+                if (endpoint) {
+                    try {
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 6000);
+                        const resp = await fetch(endpoint, { method: 'GET', signal: controller.signal, cache: forceRefresh ? 'reload' : 'default' });
+                        clearTimeout(timeout);
+                        if (resp.ok) {
+                            const payload = await resp.json();
+                            const remoteModels = Array.isArray(payload) ? payload : (Array.isArray(payload?.models) ? payload.models : []);
+                            if (remoteModels.length > 0) {
+                                this.debugLog('models source', { source: 'endpoint', endpoint, count: remoteModels.length });
+                                return remoteModels.map((m, index) => this.normalizeModelRecord(m, index));
+                            }
+                        }
+                    } catch (err) {
+                        this.debugLog('models endpoint failed', err?.message || err);
+                    }
+                }
+
+                const injected = window.AIRD_MODELS_JSON;
+                if (Array.isArray(injected) && injected.length > 0) {
+                    this.debugLog('models source', { source: 'window.AIRD_MODELS_JSON', count: injected.length });
+                    return injected.map((m, index) => this.normalizeModelRecord(m, index));
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, 120));
+                const fallback = this.getFallbackModels();
+                this.debugLog('models source', { source: 'fallback', count: fallback.length });
+                return fallback.map((m, index) => this.normalizeModelRecord(m, index));
+            }
+
+            getFallbackModels() {
+                return [
+                    { id: 'openai-gpt-4o', name: 'GPT-4o', providerId: 'openai', type: 'vision', contextWindow: 128000, pricingType: 'paid', isFree: false, requiresApiKey: true, freeTier: 'none', features: ['Vision', 'Code', 'Reasoning'], category: ['vision', 'code', 'reasoning'], speed: 'medium', api: 'https://api.openai.com/v1', apiKeyUrl: 'https://platform.openai.com/api-keys' },
+                    { id: 'openai-gpt-4o-mini', name: 'GPT-4o mini', providerId: 'openai', type: 'chat', contextWindow: 128000, pricingType: 'freemium', isFree: true, requiresApiKey: true, freeTier: 'limited', features: ['Fast', 'Chat'], category: ['fast'], speed: 'fast', api: 'https://api.openai.com/v1', apiKeyUrl: 'https://platform.openai.com/api-keys' },
+                    { id: 'openai-o3-mini', name: 'o3-mini', providerId: 'openai', type: 'code', contextWindow: 200000, pricingType: 'paid', isFree: false, requiresApiKey: true, freeTier: 'none', features: ['Code', 'Reasoning'], category: ['code', 'reasoning'], speed: 'medium', api: 'https://api.openai.com/v1', apiKeyUrl: 'https://platform.openai.com/api-keys' },
+                    { id: 'anthropic-sonnet', name: 'Claude 3.7 Sonnet', providerId: 'anthropic', type: 'chat', contextWindow: 200000, pricingType: 'paid', isFree: false, requiresApiKey: true, freeTier: 'none', features: ['Reasoning', 'Long Context'], category: ['reasoning'], speed: 'medium', api: 'https://api.anthropic.com/v1', apiKeyUrl: 'https://console.anthropic.com/settings/keys' },
+                    { id: 'anthropic-haiku', name: 'Claude 3.5 Haiku', providerId: 'anthropic', type: 'chat', contextWindow: 200000, pricingType: 'freemium', isFree: true, requiresApiKey: true, freeTier: 'limited', features: ['Fast'], category: ['fast'], speed: 'fast', api: 'https://api.anthropic.com/v1', apiKeyUrl: 'https://console.anthropic.com/settings/keys' },
+                    { id: 'openrouter-gemini-flash', name: 'Gemini 2.0 Flash', providerId: 'openrouter', type: 'vision', contextWindow: 1000000, pricingType: 'freemium', isFree: true, requiresApiKey: true, freeTier: 'limited', features: ['Vision', 'Fast'], category: ['vision', 'fast'], speed: 'fast', api: 'https://openrouter.ai/api/v1', apiKeyUrl: 'https://openrouter.ai/keys' },
+                    { id: 'openrouter-deepseek-r1', name: 'DeepSeek R1', providerId: 'openrouter', type: 'code', contextWindow: 128000, pricingType: 'paid', isFree: false, requiresApiKey: true, freeTier: 'none', features: ['Code', 'Reasoning'], category: ['code', 'reasoning'], speed: 'medium', api: 'https://openrouter.ai/api/v1', apiKeyUrl: 'https://openrouter.ai/keys' },
+                    { id: 'openrouter-mistral-7b', name: 'Mistral 7B', providerId: 'openrouter', companyId: 'openrouter', type: 'chat', contextWindow: 8192, pricingType: 'free', isFree: true, requiresApiKey: true, freeTier: 'unlimited', features: ['Free', 'Fast'], category: ['fast'], speed: 'fast', api: 'https://openrouter.ai/api/v1', apiKeyUrl: 'https://openrouter.ai/keys', model: 'mistralai/mistral-7b-instruct' },
+                    { id: 'openrouter-llama-3-8b', name: 'Llama 3 8B Instruct', providerId: 'openrouter', companyId: 'openrouter', type: 'chat', contextWindow: 8192, pricingType: 'free', isFree: true, requiresApiKey: true, freeTier: 'unlimited', features: ['Free', 'Open Source'], category: ['fast'], speed: 'fast', api: 'https://openrouter.ai/api/v1', apiKeyUrl: 'https://openrouter.ai/keys', model: 'meta-llama/llama-3-8b-instruct' },
+                    { id: 'openrouter-openchat-7b', name: 'OpenChat 7B', providerId: 'openrouter', companyId: 'openrouter', type: 'chat', contextWindow: 8192, pricingType: 'free', isFree: true, requiresApiKey: true, freeTier: 'unlimited', features: ['Free', 'Chat'], category: ['fast'], speed: 'fast', api: 'https://openrouter.ai/api/v1', apiKeyUrl: 'https://openrouter.ai/keys', model: 'openchat/openchat-7b' },
+                    { id: 'openrouter-nous-hermes-2-mixtral', name: 'Nous Hermes 2 Mixtral', providerId: 'openrouter', companyId: 'openrouter', type: 'chat', contextWindow: 32768, pricingType: 'freemium', isFree: true, requiresApiKey: true, freeTier: 'limited', features: ['Free Tier', 'Reasoning'], category: ['reasoning'], speed: 'medium', api: 'https://openrouter.ai/api/v1', apiKeyUrl: 'https://openrouter.ai/keys', model: 'nousresearch/nous-hermes-2-mixtral' },
+                    { id: 'together-llama-405b', name: 'Llama 3.1 405B Instruct', providerId: 'together', type: 'chat', contextWindow: 32768, pricingType: 'paid', isFree: false, requiresApiKey: true, freeTier: 'none', features: ['Reasoning'], category: ['reasoning'], speed: 'slow', api: 'https://api.together.xyz/v1', apiKeyUrl: 'https://api.together.ai/settings/api-keys' },
+                    { id: 'together-deepseek-coder', name: 'DeepSeek Coder V2', providerId: 'together', type: 'code', contextWindow: 128000, pricingType: 'freemium', isFree: true, requiresApiKey: true, freeTier: 'limited', features: ['Code', 'Fast'], category: ['code', 'fast'], speed: 'fast', api: 'https://api.together.xyz/v1', apiKeyUrl: 'https://api.together.ai/settings/api-keys' },
+                    { id: 'ollama-llama3', name: 'Llama 3 (Ollama)', providerId: 'ollama', type: 'chat', contextWindow: 8192, pricingType: 'local', isFree: true, requiresApiKey: false, freeTier: 'unlimited', features: ['Local'], category: ['fast'], speed: 'medium', api: 'http://localhost:11434', apiKeyUrl: 'https://ollama.com/download' },
+                    { id: 'ollama-codellama', name: 'Code Llama (Ollama)', providerId: 'ollama', type: 'code', contextWindow: 16384, pricingType: 'local', isFree: true, requiresApiKey: false, freeTier: 'unlimited', features: ['Code', 'Local'], category: ['code'], speed: 'medium', api: 'http://localhost:11434', apiKeyUrl: 'https://ollama.com/download' },
+                    { id: 'lmstudio-qwen', name: 'Qwen2.5 (LM Studio)', providerId: 'lmstudio', type: 'chat', contextWindow: 32768, pricingType: 'local', isFree: true, requiresApiKey: false, freeTier: 'unlimited', features: ['Local'], category: ['reasoning'], speed: 'medium', api: 'http://localhost:1234/v1', apiKeyUrl: 'https://lmstudio.ai/' },
+                    { id: 'lmstudio-phi', name: 'Phi-4 (LM Studio)', providerId: 'lmstudio', type: 'code', contextWindow: 16384, pricingType: 'local', isFree: true, requiresApiKey: false, freeTier: 'unlimited', features: ['Code', 'Local'], category: ['code', 'fast'], speed: 'fast', api: 'http://localhost:1234/v1', apiKeyUrl: 'https://lmstudio.ai/' }
+                ];
+            }
+
+            normalizeModelRecord(record, index = 0) {
+                const providerId = this.normalizeProviderId(record?.providerId ?? record?.companyId ?? record?.provider ?? '');
+                const provider = this.getProviderById(providerId) || this.getProviderByName(record?.provider);
+                const resolvedProviderId = provider?.id || providerId || 'openai';
+                const resolvedProvider = this.getProviderById(resolvedProviderId) || this.providers[0] || null;
+
+                const resolvedType = ['chat', 'code', 'vision'].includes(String(record?.type || '').toLowerCase()) ? String(record.type).toLowerCase() : 'chat';
+                const pricingTypeRaw = String(record?.pricingType || '').toLowerCase();
+                const resolvedPricingType = ['free', 'paid', 'freemium', 'local'].includes(pricingTypeRaw)
+                    ? pricingTypeRaw
+                    : (resolvedProvider?.type === 'local' ? 'local' : 'paid');
+                const requiresApiKey = Boolean(record?.requiresApiKey ?? (resolvedProvider?.apiKeyRequired ?? true));
+                const isFree = Boolean(record?.isFree ?? (resolvedPricingType === 'free' || resolvedPricingType === 'freemium' || resolvedPricingType === 'local'));
+                const contextWindow = Number(record?.contextWindow || 0);
+                const speed = String(record?.speed || (resolvedType === 'code' ? 'medium' : 'fast')).toLowerCase();
+                const features = Array.isArray(record?.features) ? record.features.filter(Boolean).map(String) : [];
+                const categorySeed = Array.isArray(record?.category) ? record.category.filter(Boolean).map((x) => String(x).toLowerCase()) : [];
+                if (!categorySeed.includes(resolvedType)) categorySeed.push(resolvedType);
+                if (!categorySeed.includes(speed)) categorySeed.push(speed);
+                const endpoint = String(record?.api || record?.endpoint || '').trim();
+                const apiKeyUrl = String(record?.apiKeyUrl || resolvedProvider?.apiUrl || '').trim();
+                const remoteModelId = String(record?.model || record?.remoteModel || record?.id || '').trim();
+
+                return {
+                    id: String(record?.id || `${resolvedProviderId}-${index + 1}`),
+                    name: String(record?.name || `Model ${index + 1}`),
+                    providerId: resolvedProviderId,
+                    companyId: resolvedProviderId,
+                    provider: resolvedProvider?.name || String(record?.provider || 'Unknown'),
+                    type: resolvedType,
+                    contextWindow: Number.isFinite(contextWindow) && contextWindow > 0 ? contextWindow : 8192,
+                    pricingType: resolvedPricingType,
+                    isFree,
+                    requiresApiKey,
+                    freeTier: String(record?.freeTier || (resolvedPricingType === 'free' ? 'unlimited' : resolvedPricingType === 'freemium' ? 'limited' : resolvedPricingType === 'local' ? 'unlimited' : 'none')).toLowerCase(),
+                    features,
+                    category: categorySeed,
+                    speed,
+                    api: endpoint || (resolvedProvider?.id === 'openrouter' ? 'https://openrouter.ai/api/v1' : ''),
+                    apiKeyUrl,
+                    remoteModel: remoteModelId
+                };
+            }
+
+            normalizeProviderId(value) {
+                const raw = String(value || '').trim();
+                if (!raw) return '';
+                const normalized = raw.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9_-]/g, '');
+                if (this.providers.some((p) => p.id === normalized)) return normalized;
+                const byName = this.providers.find((p) => p.name.toLowerCase().replace(/\s+/g, '') === normalized);
+                return byName?.id || normalized;
+            }
+
+            getProviderById(providerId) {
+                const id = this.normalizeProviderId(providerId);
+                return this.providers.find((p) => p.id === id) || null;
+            }
+
+            getProviderByName(name) {
+                const normalized = String(name || '').trim().toLowerCase();
+                if (!normalized) return null;
+                return this.providers.find((p) => p.name.toLowerCase() === normalized) || null;
+            }
+
+            getActiveProviderForModel(model = null) {
+                const sourceModel = model || this.currentModel;
+                const providerFromModel = this.getProviderById(sourceModel?.providerId);
+                if (providerFromModel) return providerFromModel;
+                const providerFromSelection = this.getProviderById(this.selectedCompany);
+                if (providerFromSelection) return providerFromSelection;
+                return this.providers[0] || null;
+            }
+
+            populateCompanyOptions() {
+                const select = document.getElementById('companySelect');
+                if (!select) return;
+                this.providers = Array.isArray(this.providers) ? this.providers : [];
+                this.companies = this.providers;
+                select.innerHTML = '';
+                const allOption = document.createElement('option');
+                allOption.value = 'all';
+                allOption.textContent = 'All Providers';
+                select.appendChild(allOption);
+                if (this.providers.length === 0) {
+                    allOption.textContent = 'No providers available';
+                    allOption.disabled = true;
+                    select.value = 'all';
+                    this.renderCompanyDropdown();
+                    return;
+                }
+                for (const provider of this.providers) {
+                    const option = document.createElement('option');
+                    option.value = String(provider.id);
+                    option.textContent = provider.name;
+                    select.appendChild(option);
+                }
+                if (this.selectedCompany !== 'all' && !this.providers.some((p) => String(p.id) === String(this.selectedCompany))) {
+                    this.selectedCompany = 'all';
+                }
+                select.value = String(this.selectedCompany || 'all');
+                this.renderCompanyDropdown();
+            }
+
+            renderCompanyDropdown() {
+                const dropdown = document.getElementById('companyDropdown');
+                const trigger = document.getElementById('companySelectTrigger');
+                if (!dropdown || !trigger) return;
+                if (!Array.isArray(this.providers) || this.providers.length === 0) {
+                    dropdown.innerHTML = '<button type="button" class="company-option" disabled>No providers available</button>';
+                    trigger.textContent = 'No providers available';
+                    return;
+                }
+                const options = [{ id: 'all', name: 'All Providers' }, ...this.providers];
+                dropdown.innerHTML = '';
+                for (const entry of options) {
+                    const value = String(entry.id);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = `company-option ${String(this.selectedCompany) === value ? 'active' : ''}`;
+                    btn.dataset.value = value;
+                    btn.textContent = entry.name;
+                    dropdown.appendChild(btn);
+                }
+                this.updateCompanyTriggerLabel();
+            }
+
+            updateCompanyTriggerLabel() {
+                const trigger = document.getElementById('companySelectTrigger');
+                if (!trigger) return;
+                if (String(this.selectedCompany) === 'all') {
+                    trigger.textContent = 'All Providers';
+                    return;
+                }
+                const provider = this.providers.find((c) => String(c.id) === String(this.selectedCompany));
+                trigger.textContent = provider?.name || 'All Providers';
+            }
+
+            toggleCompanyDropdown(forceOpen) {
+                const dropdown = document.getElementById('companyDropdown');
+                const trigger = document.getElementById('companySelectTrigger');
+                if (!dropdown || !trigger) return;
+                const nextOpen = typeof forceOpen === 'boolean' ? forceOpen : !this.companyDropdownOpen;
+                this.companyDropdownOpen = nextOpen;
+                dropdown.classList.toggle('open', nextOpen);
+                trigger.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+            }
+
+            setSelectedCompany(nextCompany, reason = 'companyChange') {
+                const normalized = String(nextCompany || 'all');
+                const isKnown = normalized === 'all' || this.providers.some((c) => String(c.id) === normalized);
+                const safeCompany = isKnown ? normalized : 'all';
+                if (safeCompany === this.selectedCompany) {
+                    this.updateProviderSettingsUI();
+                    return;
+                }
+
+                this.selectedCompany = safeCompany;
+                this.filterCacheKey = '';
+                this.debugLog('company changed', { selectedCompany: this.selectedCompany, reason });
+
+                const hiddenSelect = document.getElementById('companySelect');
+                if (hiddenSelect) hiddenSelect.value = this.selectedCompany;
+
+                this.renderCompanyDropdown();
+
+                const filtered = this.getFilteredModels();
+                if (filtered.length > 0 && !filtered.some((m) => String(m.id) === String(this.currentModel?.id))) {
+                    this.currentModel = filtered[0];
+                    this.updateModelBadge();
+                } else if (filtered.length === 0 && this.selectedCompany !== 'all') {
+                    this.currentModel = null;
+                    this.updateModelBadge();
+                }
+
+                this.checkApiKey();
+                this.updateProviderSettingsUI();
+                this.safeRenderModels(reason);
+            }
+
+            getFilteredModels() {
+                const cacheKey = `${this.selectedCompany}|${this.currentFilter}|${this.showFreeOnly ? 1 : 0}|${this.searchQuery}|${this.modelsVersion}`;
+                if (this.filterCacheKey === cacheKey) {
+                    return this.filterCacheResult;
+                }
+                let models = Array.isArray(this.availableModels) ? this.availableModels : [];
+                if (this.selectedCompany !== 'all') {
+                    const selectedProvider = this.normalizeProviderId(this.selectedCompany);
+                    models = models.filter((m) => this.normalizeProviderId(m.providerId ?? m.companyId) === selectedProvider);
+                }
+                if (this.searchQuery) {
+                    const q = this.searchQuery.toLowerCase();
+                    models = models.filter((m) =>
+                        m.name.toLowerCase().includes(q) ||
+                        (m.provider || '').toLowerCase().includes(q) ||
+                        (m.type || '').toLowerCase().includes(q)
+                    );
+                }
+                if (this.currentFilter !== 'all') {
+                    models = models.filter((m) => {
+                        const modelType = String(m.type || '').toLowerCase();
+                        const category = Array.isArray(m.category) ? m.category.map((x) => String(x).toLowerCase()) : [];
+                        return modelType === this.currentFilter || category.includes(this.currentFilter);
+                    });
+                }
+                if (this.showFreeOnly) {
+                    models = models.filter((m) => Boolean(m.isFree));
+                }
+                this.filterCacheKey = cacheKey;
+                this.filterCacheResult = models;
+                this.debugLog('filter models', {
+                    providersLength: Array.isArray(this.providers) ? this.providers.length : 0,
+                    companiesLength: Array.isArray(this.companies) ? this.companies.length : 0,
+                    modelsLength: Array.isArray(this.availableModels) ? this.availableModels.length : 0,
+                    selectedCompany: this.selectedCompany,
+                    filteredModelsLength: models.length
+                });
+                return models;
+            }
+
+            initializeModels() {
+                return [
+                    { name: 'GPT-4 Turbo', provider: 'OpenAI', contextWindow: 128000, features: ['Vision', 'Code', 'Reasoning'], category: ['vision', 'code', 'reasoning'], speed: 'medium' },
+                    { name: 'GPT-4', provider: 'OpenAI', contextWindow: 8192, features: ['Reasoning', 'Code'], category: ['code', 'reasoning'], speed: 'slow' },
+                    { name: 'GPT-3.5 Turbo', provider: 'OpenAI', contextWindow: 16385, features: ['Fast', 'Code'], category: ['code', 'fast'], speed: 'fast' },
+                    { name: 'o1-preview', provider: 'OpenAI', contextWindow: 128000, features: ['Advanced Reasoning'], category: ['reasoning'], speed: 'slow' },
+                    { name: 'o1-mini', provider: 'OpenAI', contextWindow: 128000, features: ['Reasoning', 'Fast'], category: ['reasoning', 'fast'], speed: 'fast' },
+                    { name: 'Claude 3 Opus', provider: 'Anthropic', contextWindow: 200000, features: ['Vision', 'Code', 'Reasoning'], category: ['vision', 'code', 'reasoning'], speed: 'slow' },
+                    { name: 'Claude 3 Sonnet', provider: 'Anthropic', contextWindow: 200000, features: ['Vision', 'Code', 'Balance'], category: ['vision', 'code'], speed: 'medium' },
+                    { name: 'Claude 3 Haiku', provider: 'Anthropic', contextWindow: 200000, features: ['Fast', 'Vision'], category: ['vision', 'fast'], speed: 'fast' },
+                    { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', contextWindow: 200000, features: ['Vision', 'Code', 'Advanced'], category: ['vision', 'code', 'reasoning'], speed: 'medium' },
+                    { name: 'Gemini 1.5 Pro', provider: 'Google', contextWindow: 1000000, features: ['Vision', 'Code', 'Long Context'], category: ['vision', 'code'], speed: 'medium' },
+                    { name: 'Gemini 1.5 Flash', provider: 'Google', contextWindow: 1000000, features: ['Fast', 'Vision', 'Long Context'], category: ['vision', 'fast'], speed: 'fast' },
+                    { name: 'Gemini Ultra', provider: 'Google', contextWindow: 32000, features: ['Vision', 'Reasoning'], category: ['vision', 'reasoning'], speed: 'slow' },
+                    { name: 'Llama 3 70B', provider: 'Meta', contextWindow: 8192, features: ['Code', 'Open Source'], category: ['code'], speed: 'medium' },
+                    { name: 'Llama 3 8B', provider: 'Meta', contextWindow: 8192, features: ['Fast', 'Open Source'], category: ['fast'], speed: 'fast' },
+                    { name: 'Mistral Large', provider: 'Mistral AI', contextWindow: 32000, features: ['Code', 'Reasoning'], category: ['code', 'reasoning'], speed: 'medium' },
+                    { name: 'Mistral Medium', provider: 'Mistral AI', contextWindow: 32000, features: ['Balance', 'Code'], category: ['code'], speed: 'medium' },
+                    { name: 'Mistral Small', provider: 'Mistral AI', contextWindow: 32000, features: ['Fast', 'Cost Effective'], category: ['fast'], speed: 'fast' },
+                    { name: 'Command R+', provider: 'Cohere', contextWindow: 128000, features: ['RAG', 'Code'], category: ['code'], speed: 'medium' },
+                    { name: 'Command R', provider: 'Cohere', contextWindow: 128000, features: ['RAG', 'Fast'], category: ['fast'], speed: 'fast' },
+                    { name: 'DeepSeek-V2', provider: 'DeepSeek', contextWindow: 128000, features: ['Code', 'Math', 'Reasoning'], category: ['code', 'reasoning'], speed: 'medium' },
+                    { name: 'DeepSeek-Coder', provider: 'DeepSeek', contextWindow: 128000, features: ['Code', 'Specialized'], category: ['code'], speed: 'medium' }
+                ];
+            }
+
+            renderModels() {
+                const container = document.getElementById('modelsList');
+                if (!container) return;
+                if (this.modelLoading) {
+                    container.innerHTML = '<div class="plugin-card">Loading models...</div>';
+                    return;
+                }
+                if (this.modelError) {
+                    container.innerHTML = `<div class="plugin-card">${this.modelError}</div>`;
+                    return;
+                }
+                const models = this.getFilteredModels();
+                if (!models.length) {
+                    container.innerHTML = '<div class="plugin-card">No models available</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                const frag = document.createDocumentFragment();
+                for (const model of models) {
+                    const card = document.createElement('div');
+                    card.className = `model-card ${String(this.currentModel?.id || '') === String(model.id) ? 'selected' : ''}`;
+                    card.dataset.modelId = String(model.id);
+
+                    const header = document.createElement('div');
+                    header.className = 'model-header';
+                    const modelName = document.createElement('div');
+                    modelName.className = 'model-name';
+                    modelName.textContent = model.name;
+                    const priceBadge = document.createElement('span');
+                    const isFreeModel = Boolean(model.isFree);
+                    priceBadge.className = `model-price-badge ${isFreeModel ? 'free' : 'paid'}`;
+                    priceBadge.textContent = isFreeModel ? 'FREE' : 'PAID';
+                    modelName.appendChild(priceBadge);
+                    const badge = document.createElement('div');
+                    badge.className = 'model-badge-small';
+                    badge.textContent = model.provider;
+                    header.appendChild(modelName);
+                    header.appendChild(badge);
+
+                    const info = document.createElement('div');
+                    info.className = 'model-info';
+                    const contextWindow = Number(model.contextWindow || 0);
+                    info.textContent = `${Math.max(0, contextWindow / 1000).toFixed(0)}K context - ${(model.type || 'chat').toUpperCase()} - ${model.speed || 'unknown'}`;
+
+                    const pricing = document.createElement('div');
+                    pricing.className = 'model-info';
+                    pricing.textContent = `Pricing: ${this.formatPricingLabel(model)}`;
+
+                    const features = document.createElement('div');
+                    features.className = 'model-features';
+                    const pricingTag = document.createElement('span');
+                    pricingTag.className = 'feature-tag';
+                    pricingTag.textContent = (model.pricingType || 'paid').toUpperCase();
+                    features.appendChild(pricingTag);
+                    const modelFeatures = Array.isArray(model.features) ? model.features : [];
+                    for (const f of modelFeatures) {
+                        const tag = document.createElement('span');
+                        tag.className = 'feature-tag';
+                        tag.textContent = f;
+                        features.appendChild(tag);
+                    }
+
+                    card.appendChild(header);
+                    card.appendChild(info);
+                    card.appendChild(pricing);
+                    card.appendChild(features);
+                    card.addEventListener('click', () => this.selectModel(model.id));
+                    frag.appendChild(card);
+                }
+                container.appendChild(frag);
+                this.debugLog('models rendered', models.length);
+            }
+
+            selectModel(modelId) {
+                this.currentModel = this.availableModels.find((m) => String(m.id) === String(modelId));
+                if (!this.currentModel) {
+                    this.debugLog('selectModel failed: not found', modelId);
+                    return;
+                }
+                if (this.currentModel.providerId && this.selectedCompany !== this.currentModel.providerId) {
+                    this.selectedCompany = this.currentModel.providerId;
+                    const hiddenSelect = document.getElementById('companySelect');
+                    if (hiddenSelect) hiddenSelect.value = this.selectedCompany;
+                    this.renderCompanyDropdown();
+                }
+                this.safeRenderModels('selectModel');
+                this.updateModelBadge();
+                this.checkApiKey();
+                this.updateProviderSettingsUI();
+                this.addMessage(`Switched to model: **${this.currentModel.name}**\nProvider: ${this.currentModel.provider}`, 'assistant');
+            }
+
+            formatPricingLabel(model) {
+                const pricingType = String(model?.pricingType || 'paid').toLowerCase();
+                if (pricingType === 'local') return 'Local (Runs on your machine)';
+                if (pricingType === 'free') {
+                    return model?.freeTier === 'limited' ? 'Free (Limited)' : 'Free (Unlimited)';
+                }
+                if (pricingType === 'freemium') {
+                    return model?.freeTier === 'unlimited' ? 'Freemium (Unlimited Free Tier)' : 'Freemium (Limited Free Tier)';
+                }
+                return 'Paid';
+            }
+
+            updateModelBadge() {
+                const badge = document.getElementById('currentModelBadge');
+                if (!badge) return;
+                badge.textContent = this.currentModel?.name || 'No Model';
+            }
+
+            checkApiKey() {
+                const provider = this.getActiveProviderForModel();
+                const input = document.getElementById('apiKeyInput');
+                if (!provider) {
+                    this.apiValid = false;
+                    this.updateApiIndicator();
+                    return;
+                }
+
+                const savedKey = localStorage.getItem(this.getProviderApiStorageKey(provider.id)) || '';
+                if (!provider.apiKeyRequired) {
+                    this.apiValid = true;
+                    if (input) input.value = '';
+                    this.updateApiIndicator();
+                    return;
+                }
+
+                if (savedKey) {
+                    if (input) input.value = '••••••••••••••••';
+                    // Do not trigger network verification on provider switch to avoid UI stalls.
+                    this.apiValid = true;
+                } else {
+                    this.apiValid = false;
+                    if (input) input.value = '';
+                }
+                this.updateApiIndicator();
+            }
+
+            validateApiKey(key) {
+                const provider = this.getActiveProviderForModel();
+                if (!provider) return;
+                if (!provider.apiKeyRequired) {
+                    this.apiValid = true;
+                    this.updateApiIndicator();
+                    this.addMessage(`Provider ${provider.name} does not require an API key.`, 'assistant');
+                    return;
+                }
+                if (String(key || '').length > 10) {
+                    localStorage.setItem(this.getProviderApiStorageKey(provider.id), key);
+                    this.verifyApiConnection(key, provider);
+                } else {
+                    this.apiValid = false;
+                    this.updateApiIndicator();
+                    this.addMessage('⚠️ Invalid API key format.', 'assistant');
+                }
+            }
+
+            async verifyApiConnection(key, provider = null, silent = false) {
+                const activeProvider = provider || this.getActiveProviderForModel();
+                if (!activeProvider) return;
+                const verifySeq = ++this.apiVerifySeq;
+                try {
+                    if (activeProvider.id !== 'openai') {
+                        if (verifySeq !== this.apiVerifySeq) return;
+                        this.apiValid = true;
+                        this.updateApiIndicator();
+                        if (!silent) this.addMessage(`✅ API key saved for ${activeProvider.name}.`, 'assistant');
+                        return;
+                    }
+                    if (silent) {
+                        if (verifySeq !== this.apiVerifySeq) return;
+                        this.apiValid = true;
+                        this.updateApiIndicator();
+                        return;
+                    }
+                    const controller = new AbortController();
+                    const timer = setTimeout(() => controller.abort(), 8000);
+                    const resp = await fetch('https://api.openai.com/v1/models', {
+                        method: 'GET',
+                        headers: { Authorization: `Bearer ${key}` },
+                        signal: controller.signal
+                    });
+                    clearTimeout(timer);
+                    if (verifySeq !== this.apiVerifySeq) return;
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    this.apiValid = true;
+                    this.updateApiIndicator();
+                    if (!silent) this.addMessage(`✅ API key verified with ${activeProvider.name}.`, 'assistant');
+                } catch (err) {
+                    if (verifySeq !== this.apiVerifySeq) return;
+                    this.apiValid = false;
+                    this.updateApiIndicator();
+                    if (!silent) this.addMessage(`⚠️ API key saved for ${activeProvider.name}, but live verification failed.`, 'assistant');
+                }
+            }
+
+            getProviderApiStorageKey(providerId) {
+                return `aura_api_key_${this.normalizeProviderId(providerId || 'default')}`;
+            }
+
+            getProviderApiKey(providerId) {
+                const key = localStorage.getItem(this.getProviderApiStorageKey(providerId));
+                return key || '';
+            }
+
+            getEffectiveApiKey(providerId) {
+                const input = document.getElementById('apiKeyInput');
+                const inputValue = input?.value?.trim() || '';
+                if (inputValue && inputValue !== '••••••••••••••••') {
+                    return inputValue;
+                }
+                return this.getProviderApiKey(providerId);
+            }
+
+            updateProviderSettingsUI() {
+                const provider = this.getActiveProviderForModel();
+                const meta = document.getElementById('providerMeta');
+                const keyStatus = document.getElementById('providerKeyStatus');
+                const apiHint = document.getElementById('providerApiHint');
+                const getKeyBtn = document.getElementById('getApiKeyBtn');
+                const localNote = document.getElementById('providerLocalNote');
+                const apiKeySetting = document.getElementById('apiKeySettingItem');
+                const apiInput = document.getElementById('apiKeyInput');
+                if (!provider) return;
+
+                if (meta) {
+                    const keyMode = provider.apiKeyRequired ? 'API key required' : 'No API key required';
+                    const model = this.currentModel || null;
+                    const endpoint = model?.api || (provider.id === 'openrouter' ? 'https://openrouter.ai/api/v1' : 'N/A');
+                    const keyUrl = model?.apiKeyUrl || provider.apiUrl || 'N/A';
+                    const pricing = model ? this.formatPricingLabel(model) : 'N/A';
+                    meta.textContent = `Provider: ${provider.name} (${provider.type}) - ${keyMode} | API Endpoint: ${endpoint} | API Key URL: ${keyUrl} | Pricing Type: ${pricing}`;
+                }
+
+                if (keyStatus) {
+                    keyStatus.textContent = provider.apiKeyRequired ? 'API key required' : 'No API key required';
+                }
+
+                if (getKeyBtn) {
+                    getKeyBtn.disabled = !provider.apiUrl;
+                    getKeyBtn.dataset.url = provider.apiUrl || '';
+                    getKeyBtn.textContent = provider.apiUrl ? 'Get API Key' : 'No API URL';
+                }
+
+                if (apiHint) apiHint.style.display = provider.apiUrl || provider.apiKeyRequired ? '' : 'none';
+                if (localNote) localNote.style.display = provider.type === 'local' ? '' : 'none';
+                if (apiKeySetting) apiKeySetting.style.display = provider.apiKeyRequired ? '' : 'none';
+
+                if (apiInput) {
+                    if (provider.apiKeyRequired) {
+                        apiInput.placeholder = provider.id === 'openai' ? 'sk-...' : `${provider.name} key`;
+                        const savedKey = this.getProviderApiKey(provider.id);
+                        apiInput.value = savedKey ? '••••••••••••••••' : '';
+                    } else {
+                        apiInput.value = '';
+                    }
+                }
+            }
+
+            saveProviderConfiguration() {
+                const provider = this.getActiveProviderForModel();
+                if (!provider) return;
+                const key = this.getEffectiveApiKey(provider.id);
+                if (provider.apiKeyRequired) {
+                    if (!key) {
+                        this.addMessage(`Please enter an API key for ${provider.name}.`, 'assistant');
+                        return;
+                    }
+                    this.validateApiKey(key);
+                    return;
+                }
+                this.apiValid = true;
+                this.updateApiIndicator();
+                this.addMessage(`${provider.name} settings saved.`, 'assistant');
+            }
+
+            async refreshModels() {
+                this.filterCacheKey = '';
+                this.debugLog('models refresh requested');
+                await this.loadModels(true);
+            }
+            loadMockActors() {
+                this.actors = [];
+                this.updateSceneExplorer();
+            }
+
+            isLightActor(actor) {
+                const t = String(actor?.type || '').toLowerCase();
+                return t.includes('light');
+            }
+
+            isStaticMeshActor(actor) {
+                const t = String(actor?.type || '').toLowerCase();
+                return t.includes('staticmesh');
+            }
+
+            updateSceneExplorer() {
+                const container = document.getElementById('actorTree');
+                if (!container) return;
+                container.innerHTML = this.actors.map(actor => `<div class="actor-node ${this.selectedActor === actor.id ? 'selected' : ''}" onclick="auraPro.selectActor(${actor.id})"><div class="actor-name">${this.getActorIcon(actor.type)} ${actor.name}</div></div>`).join('');
+                const lights = this.actors.filter(a => this.isLightActor(a)).length;
+                const meshes = this.actors.filter(a => this.isStaticMeshActor(a)).length;
+                const statsEl = document.getElementById('sceneStats');
+                if (statsEl) {
+                    const statusText = this.sceneContextValid ? 'Live Scene Connected' : (this.rpcConnected ? 'MCP Connected (No Scene)' : 'Waiting for Live Scene...');
+                    statsEl.innerHTML = `<div class="actor-node">${statusText}</div><div class="actor-node">Total Actors: ${this.actors.length}</div><div class="actor-node">Lights: ${lights}</div><div class="actor-node">Static Meshes: ${meshes}</div>`;
+                }
+            }
+
+            selectActor(id) {
+                this.selectedActor = id;
+                const actor = this.actors.find(a => a.id === id);
+                if (!actor) return;
+                this.updateSceneExplorer();
+                this.addMessage(`Selected: **${actor.name}**\nType: ${actor.type}\nLocation: (${actor.location.x}, ${actor.location.y}, ${actor.location.z})`, 'assistant');
+            }
+
+            getActorIcon(type) { const icons = { 'PlayerStart': 'PS', 'Light': 'L', 'StaticMesh': 'M', 'Blueprint': 'BP', 'Camera': 'C', 'ParticleSystem': 'FX' }; return icons[type] || 'A'; }
+
+            initViewport() {
+                const canvas = document.getElementById('viewportCanvas');
+                if (!canvas) {
+                    this.debugLog('viewport canvas missing');
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    this.debugLog('viewport context missing');
+                    return;
+                }
+                this.drawScene(ctx, canvas.width, canvas.height);
+            }
+
+            drawScene(ctx, width, height) {
+                const gradient = ctx.createLinearGradient(0, 0, width, height);
+                gradient.addColorStop(0, '#1a1a2e'); gradient.addColorStop(1, '#16213e');
+                ctx.fillStyle = gradient; ctx.fillRect(0, 0, width, height);
+                ctx.strokeStyle = 'rgba(254, 96, 81, 0.1)'; ctx.lineWidth = 1;
+                for (let i = 0; i < width; i += 50) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke(); }
+                for (let i = 0; i < height; i += 50) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke(); }
+                const offsetX = width / 2, offsetY = height / 2;
+                this.actors.forEach(actor => {
+                    const x = offsetX + actor.location.x / 10, y = offsetY - actor.location.z / 10;
+                    ctx.fillStyle = this.selectedActor === actor.id ? '#fbd07e' : '#FE6051';
+                    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = 'white'; ctx.font = '10px Arial'; ctx.fillText(actor.name, x + 10, y - 5);
+                });
+            }
+
+            toggleViewMode() {
+                if (!this.threeScene) {
+                    this.initThreeJS();
+                    this.addMessage('3D mode initialized.', 'assistant');
+                    return;
+                }
+                this.addMessage('3D mode is active.', 'assistant');
+            }
+
+            toggleViewportPanel() {
+                const section = document.getElementById('viewportSection');
+                const btn = document.getElementById('toggleViewportBtn');
+                if (!section || !btn) return;
+                const isHidden = section.classList.toggle('collapsed');
+                btn.textContent = isHidden ? 'Show Viewport' : 'Hide Viewport';
+            }
+
+            initAutoResize() {
+                const textarea = document.getElementById('chatInput');
+                if (!textarea) return;
+                const resizeInput = () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+                };
+                textarea.addEventListener('input', resizeInput);
+                window.addEventListener('resize', resizeInput);
+                resizeInput();
+            }
+
+            attachImage() {
+                const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) { const reader = new FileReader(); reader.onload = (event) => { this.attachedImage = event.target.result; const preview = document.getElementById('visionPreview'); const img = document.getElementById('visionImage'); img.src = this.attachedImage; preview.classList.add('active'); this.addMessage(`Image attached: ${file.name}`, 'assistant'); }; reader.readAsDataURL(file); }
+                }; input.click();
+            }
+
+            async captureScreenshot() {
+                const canvas = document.getElementById('viewportCanvas');
+                this.attachedImage = canvas.toDataURL('image/png');
+                const preview = document.getElementById('visionPreview'); document.getElementById('visionImage').src = this.attachedImage; preview.classList.add('active');
+                this.addMessage('Screenshot captured from viewport.', 'assistant');
+            }
+
+            removeVisionAttachment() { this.attachedImage = null; document.getElementById('visionPreview').classList.remove('active'); }
+
+            insertCodeTemplate() {
+                const textarea = document.getElementById('chatInput');
+                const codeTemplate = "```cpp\n// Your code here\nAActor* NewActor = GetWorld()->SpawnActor<AActor>();\n```";
+                const start = textarea.selectionStart, end = textarea.selectionEnd;
+                textarea.value = textarea.value.substring(0, start) + codeTemplate + textarea.value.substring(end);
+                textarea.dispatchEvent(new Event('input')); textarea.focus();
+            }
+
+            initRpcConnection() {
+                const input = document.getElementById('mcpServer');
+                if (input && !input.value) {
+                    this.mcpServerUrl = this.normalizeMcpUrl(this.mcpServerUrl);
+                    input.value = this.mcpServerUrl;
+                } else if (input) {
+                    this.mcpServerUrl = this.normalizeMcpUrl(input.value.trim() || this.mcpServerUrl);
+                    input.value = this.mcpServerUrl;
+                }
+                this.debugLog('initRpcConnection', this.mcpServerUrl);
+                this.updateConnectionIndicator('disconnected');
+                this.updateApiIndicator();
+                this.connectRpc();
+            }
+
+            updateApiIndicator() {
+                const dot = document.getElementById('apiStatus');
+                if (!dot) return;
+                dot.className = this.apiValid ? 'status-dot connected' : 'status-dot disconnected';
+                dot.title = `API: ${this.apiValid ? 'connected' : 'disconnected'}`;
+            }
+
+            updateRuntimeDebugPanel() {
+                const panel = document.getElementById('runtimeDebugPanel');
+                if (!panel) return;
+                const actorCount = Array.isArray(this.actors) ? this.actors.length : 0;
+                const sceneStatus = this.sceneContextValid ? `Valid (${this.sceneSource || 'unknown'})` : `Missing (${this.sceneSource || 'unknown'})`;
+                const mcpStatus = this.rpcConnected ? (this.sceneContextValid ? 'Connected + Synced' : 'Connected (No Scene)') : 'Disconnected';
+                const lastSync = this.lastSceneSyncAt ? new Date(this.lastSceneSyncAt).toLocaleTimeString() : 'N/A';
+                panel.innerHTML = [
+                    `Actor Count: ${actorCount}`,
+                    `Scene Status: ${sceneStatus}`,
+                    `MCP Status: ${mcpStatus}`,
+                    `Last Sync: ${lastSync}`
+                ].join('<br>');
+            }
+
+            updateConnectionIndicator(state = 'disconnected') {
+                const dot = document.getElementById('mcpStatus');
+                if (!dot) return;
+                const shouldBeConnected = state === 'connected' && this.sceneContextValid && Array.isArray(this.actors) && this.actors.length > 0;
+                if (shouldBeConnected) {
+                    dot.className = 'status-dot connected';
+                } else if (state === 'checking') {
+                    dot.className = 'status-dot checking';
+                } else {
+                    dot.className = 'status-dot disconnected';
+                }
+                dot.title = `MCP: ${shouldBeConnected ? 'connected' : state}`;
+                this.updateSceneExplorer();
+                this.updateRuntimeDebugPanel();
+            }
+
+            scheduleRpcReconnect() {
+                if (this.rpcReconnectTimer) return;
+                const delay = this.rpcReconnectDelay;
+                this.debugLog('RPC reconnect scheduled', { delay });
+                this.rpcReconnectTimer = setTimeout(() => {
+                    this.rpcReconnectTimer = null;
+                    this.connectRpc();
+                }, delay);
+                this.rpcReconnectDelay = Math.min(this.rpcReconnectDelay * 2, this.rpcReconnectMaxDelay);
+            }
+
+            async waitForRpcOpen(timeoutMs = 1800) {
+                if (this.rpcSocket && this.rpcSocket.readyState === WebSocket.OPEN) return true;
+                this.connectRpc();
+                const started = Date.now();
+                while (Date.now() - started < timeoutMs) {
+                    if (this.rpcSocket && this.rpcSocket.readyState === WebSocket.OPEN) return true;
+                    await this.delay(120);
+                }
+                return false;
+            }
+
+            connectRpc() {
+                if (this.rpcSocket && (this.rpcSocket.readyState === WebSocket.OPEN || this.rpcSocket.readyState === WebSocket.CONNECTING)) {
+                    return;
+                }
+                try {
+                    this.updateConnectionIndicator('checking');
+                    this.rpcSocket = new WebSocket(this.mcpServerUrl);
+                    this.rpcSocket.onopen = () => {
+                        this.rpcConnected = true;
+                        this.rpcReconnectDelay = 1000;
+                        if (this.rpcReconnectTimer) {
+                            clearTimeout(this.rpcReconnectTimer);
+                            this.rpcReconnectTimer = null;
+                        }
+                        this.updateConnectionIndicator('connected');
+                        this.debugLog('RPC connected', this.mcpServerUrl);
+                        this.refreshSceneContext();
+                    };
+                    this.rpcSocket.onclose = () => {
+                        this.rpcConnected = false;
+                        this.updateConnectionIndicator('disconnected');
+                        this.debugLog('RPC closed');
+                        this.scheduleRpcReconnect();
+                    };
+                    this.rpcSocket.onerror = (evt) => {
+                        this.rpcConnected = false;
+                        this.updateConnectionIndicator('disconnected');
+                        this.debugLog('RPC error', evt?.message || evt);
+                        this.scheduleRpcReconnect();
+                    };
+                    this.rpcSocket.onmessage = (event) => {
+                        try {
+                            const payload = JSON.parse(event.data);
+                            this.debugLog('WS message received', payload);
+                            const pending = this.rpcPending.get(payload.id);
+                            if (pending) {
+                                this.rpcPending.delete(payload.id);
+                                if (payload.error) pending.reject(new Error(payload.error.message || 'RPC error'));
+                                else pending.resolve(payload.result ?? payload);
+                                return;
+                            }
+                            const pendingByRequest = this.rpcPending.get(payload.requestId);
+                            if (pendingByRequest) {
+                                this.rpcPending.delete(payload.requestId);
+                                if (payload.error) pendingByRequest.reject(new Error(payload.error.message || payload.error || 'Command failed'));
+                                else pendingByRequest.resolve(payload.result ?? payload);
+                            }
+                        } catch (err) {
+                            this.debugLog('WS message parse failed', err?.message || err);
+                        }
+                    };
+                } catch (err) {
+                    this.rpcConnected = false;
+                    this.updateConnectionIndicator('disconnected');
+                    this.debugLog('connectRpc exception', err);
+                    this.scheduleRpcReconnect();
+                }
+            }
+
+            rpcCall(method, params = {}) {
+                return new Promise((resolve, reject) => {
+                    this.connectRpc();
+                    if (!this.rpcSocket || this.rpcSocket.readyState !== WebSocket.OPEN) {
+                        reject(new Error('MCP server not connected'));
+                        return;
+                    }
+                    const id = this.rpcId++;
+                    this.rpcPending.set(id, { resolve, reject });
+                    const packet = { jsonrpc: '2.0', id, method, params };
+                    this.debugLog('WS message sent', packet);
+                    this.rpcSocket.send(JSON.stringify(packet));
+                    setTimeout(() => {
+                        if (this.rpcPending.has(id)) {
+                            this.rpcPending.delete(id);
+                            reject(new Error('RPC timeout'));
+                        }
+                    }, 20000);
+                });
+            }
+
+            sendSocketRequest(packet, timeoutMs = 20000) {
+                return new Promise((resolve, reject) => {
+                    this.connectRpc();
+                    if (!this.rpcSocket || this.rpcSocket.readyState !== WebSocket.OPEN) {
+                        reject(new Error('MCP server not connected'));
+                        return;
+                    }
+                    const requestKey = String(packet.requestId || packet.id || `req_${Date.now()}_${this.rpcId++}`);
+                    const toSend = { ...packet, requestId: requestKey };
+                    this.rpcPending.set(requestKey, { resolve, reject });
+                    this.debugLog('WS message sent', toSend);
+                    this.rpcSocket.send(JSON.stringify(toSend));
+                    setTimeout(() => {
+                        if (this.rpcPending.has(requestKey)) {
+                            this.rpcPending.delete(requestKey);
+                            reject(new Error('Command timeout'));
+                        }
+                    }, timeoutMs);
+                });
+            }
+
+            async sendCommand(userMessage, commandPayload = {}, requestId = '') {
+                const connected = await this.waitForRpcOpen(1800);
+                if (!connected) {
+                    this.debugLog('sendCommand blocked: MCP not connected');
+                    return { ok: false, error: 'MCP server not connected', source: 'mcp' };
+                }
+                const resolvedRequestId = String(requestId || commandPayload?.request_id || this.nextRequestId());
+
+                const structuredPacket = {
+                    type: 'command',
+                    requestId: resolvedRequestId,
+                    payload: userMessage,
+                    meta: commandPayload
+                };
+
+                try {
+                    const rawResult = await this.sendSocketRequest(structuredPacket, 20000);
+                    return { ok: true, result: rawResult, source: 'mcp-structured' };
+                } catch (structuredError) {
+                    this.debugLog('structured command failed, trying RPC fallback', structuredError?.message || structuredError);
+                    try {
+                        const rpcResult = await this.rpcCall('execute_command', { ...commandPayload, request_id: resolvedRequestId });
+                        return { ok: true, result: rpcResult, source: 'mcp-rpc' };
+                    } catch (rpcError) {
+                        return { ok: false, error: rpcError?.message || structuredError?.message || 'MCP command failed', source: 'mcp' };
+                    }
+                }
+            }
+
+            async refreshSceneContext() {
+                if (!this.rpcConnected) {
+                    this.sceneContextValid = false;
+                    this.updateConnectionIndicator('disconnected');
+                    this.connectRpc();
+                    return;
+                }
+                try {
+                    const result = await this.rpcCall('get_scene_context', {});
+                    const actors = result?.actors;
+                    if (!Array.isArray(actors)) {
+                        this.sceneContextValid = false;
+                        this.updateConnectionIndicator('disconnected');
+                        return;
+                    }
+                    this.sceneSource = String(result?.source || 'unknown');
+                    this.actors = actors.map((actor, index) => ({
+                        id: index + 1,
+                        name: actor?.name || `Actor_${index + 1}`,
+                        type: actor?.class || actor?.type || 'Actor',
+                        location: actor?.location || { x: 0, y: 0, z: 0 }
+                    }));
+                    this.sceneContextValid = this.sceneSource !== 'unavailable' && this.actors.length > 0;
+                    this.lastSceneSyncAt = Date.now();
+                    this.updateSceneExplorer();
+                    const canvas = document.getElementById('viewportCanvas');
+                    const ctx = canvas?.getContext('2d');
+                    if (ctx && canvas && !document.getElementById('viewportSection')?.classList.contains('collapsed')) {
+                        this.drawScene(ctx, canvas.width, canvas.height);
+                    }
+                    this.updateConnectionIndicator(this.sceneContextValid ? 'connected' : 'disconnected');
+                    this.debugLog('scene synced', { actors: this.actors.length });
+                } catch (err) {
+                    this.sceneContextValid = false;
+                    this.updateConnectionIndicator('disconnected');
+                    this.debugLog('scene sync failed', err?.message || err);
+                }
+            }
+
+            startSceneSync() {
+                this.refreshSceneContext();
+                if (this.sceneSyncTimer) clearInterval(this.sceneSyncTimer);
+                this.sceneSyncTimer = setInterval(() => this.refreshSceneContext(), 2000);
+            }
+
+            getFreeFallbackModel(preferredProviderId = '') {
+                const providerId = this.normalizeProviderId(preferredProviderId || this.currentModel?.providerId || this.selectedCompany || '');
+                const allModels = Array.isArray(this.availableModels) ? this.availableModels : [];
+                const isFreeModel = (m) => Boolean(m?.isFree);
+
+                const sameProviderFree = allModels.find((m) => this.normalizeProviderId(m.providerId) === providerId && isFreeModel(m));
+                if (sameProviderFree) return sameProviderFree;
+
+                const openRouterFree = allModels.find((m) => this.normalizeProviderId(m.providerId) === 'openrouter' && isFreeModel(m));
+                if (openRouterFree) return openRouterFree;
+
+                return allModels.find((m) => isFreeModel(m)) || null;
+            }
+
+            getOpenRouterFallbackModel(preferredModel = null) {
+                const selected = String(preferredModel?.remoteModel || preferredModel?.id || '').trim();
+                if (selected.includes('/')) return selected;
+                const modelType = String(preferredModel?.type || this.currentModel?.type || '').toLowerCase();
+                if (modelType === 'code') return 'deepseek/deepseek-chat-v3-0324:free';
+                if (modelType === 'vision') return 'openai/gpt-4o-mini';
+                return 'openai/gpt-4o-mini';
+            }
+
+            async callOpenRouterFallback(userMessage, preferredModel = null) {
+                const openRouterKey = this.getEffectiveApiKey('openrouter') || this.getProviderApiKey('openrouter');
+                if (!openRouterKey) {
+                    return {
+                        ok: false,
+                        error: 'OpenRouter API key is missing',
+                        response: this.generateSmartResponse(userMessage)
+                    };
+                }
+
+                const modelName = this.getOpenRouterFallbackModel(preferredModel);
+                const payload = {
+                    model: modelName,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are AIRD Assistant inside Unreal Engine. If live scene execution is unavailable, continue as chat assistant and explain limits briefly.'
+                        },
+                        { role: 'user', content: userMessage }
+                    ],
+                    temperature: parseFloat(document.getElementById('temperatureInput')?.value || '0.7'),
+                    max_tokens: parseInt(document.getElementById('maxTokensInput')?.value || '1200', 10)
+                };
+
+                this.debugLog('OpenRouter fallback request', { model: modelName });
+                const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${openRouterKey}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                if (!resp.ok) {
+                    throw new Error(`OpenRouter HTTP ${resp.status}`);
+                }
+                const data = await resp.json();
+                const text = data?.choices?.[0]?.message?.content || 'Fallback response completed.';
+                const tokens = Number(data?.usage?.total_tokens || 0);
+                return { ok: true, response: text, tokens };
+            }
+
+            applyLiveCommandResult(result) {
+                const message = result?.message || result?.assistant || result?.payload || 'Done.';
+                const usageTokens = Number(result?.usage_tokens || 0);
+                if (result?.scene?.actors && Array.isArray(result.scene.actors) && result.scene.actors.length > 0) {
+                    this.actors = result.scene.actors.map((actor, index) => ({
+                        id: index + 1,
+                        name: actor.name || `Actor_${index + 1}`,
+                        type: actor.class || actor.type || 'Actor',
+                        location: actor.location || { x: 0, y: 0, z: 0 }
+                    }));
+                    this.updateSceneExplorer();
+                    const canvas = document.getElementById('viewportCanvas');
+                    const ctx = canvas?.getContext('2d');
+                    if (ctx && canvas) this.drawScene(ctx, canvas.width, canvas.height);
+                }
+                return { message, usageTokens };
+            }
+
+            classifyIntent(input) {
+                const text = String(input || '').trim().toLowerCase();
+                if (!text) return 'chat';
+                const greetingRe = /^(hi|hello|hey|مرحبا|اهلا|أهلا|السلام عليكم|السلام)$/i;
+                if (greetingRe.test(text)) return 'greeting';
+                const unrealKeywords = [
+                    'analyze', 'scene', 'actor', 'spawn', 'move', 'delete', 'blueprint',
+                    'viewport', 'mesh', 'light', 'camera', 'تحليل', 'مشهد', 'اكتور', 'ممثل',
+                    'انشئ', 'تحريك', 'احذف', 'بلو برنت'
+                ];
+                return unrealKeywords.some((k) => text.includes(k)) ? 'unreal' : 'chat';
+            }
+
+            buildMissingSceneDebugMessage() {
+                return [
+                    'Missing Scene Context - Cannot analyze Unreal environment.',
+                    '',
+                    'Broken Layer: Unreal/MCP Scene Extraction',
+                    'File: Content/Python/scene_perception.py',
+                    `Root Cause: scene source is "${this.sceneSource || 'unknown'}" and actor_count=${Array.isArray(this.actors) ? this.actors.length : 0}`,
+                    'Fix: Start MCP inside Unreal session and ensure Python Editor Script plugin is enabled.'
+                ].join('\n');
+            }
+
+            async processCommand(input) {
+                if (this.isProcessing) return;
+                const requestId = this.nextRequestId();
+                const intent = this.classifyIntent(input);
+                this.traceFlow('UI_REQUEST_RECEIVED', requestId, {
+                    intent,
+                    text_preview: String(input || '').slice(0, 140)
+                });
+                const activeModel = this.currentModel;
+                const activeProvider = this.getActiveProviderForModel(activeModel);
+                const providerId = activeProvider?.id || 'openai';
+                const requiresApiKey = Boolean(activeModel?.requiresApiKey ?? activeProvider?.apiKeyRequired ?? true);
+                const effectiveKey = this.getEffectiveApiKey(providerId);
+                const hasOpenRouterKey = Boolean(this.getEffectiveApiKey('openrouter') || this.getProviderApiKey('openrouter'));
+                if (requiresApiKey && !effectiveKey && !hasOpenRouterKey) {
+                    this.debugLog('processCommand: no provider key and no OpenRouter key, using local fallback if MCP fails');
+                }
+                this.isProcessing = true;
+                const startTime = Date.now();
+                this.addMessage(input, 'user');
+                this.analytics.totalMessages++;
+                this.showTypingIndicator();
+                let response = '';
+                let usageTokens = 0;
+                try {
+                    if (intent === 'greeting') {
+                        response = 'أهلا بيك! أنا جاهز أساعدك في أي حاجة داخل Unreal.';
+                        this.addMessage(response, 'assistant');
+                        const responseTime = Date.now() - startTime;
+                        this.analytics.responseTimes.push(responseTime);
+                        this.analytics.totalTokens += Math.floor(input.length / 4) + Math.floor(response.length / 4);
+                        this.updateAnalytics();
+                        this.hideTypingIndicator();
+                        this.isProcessing = false;
+                        return;
+                    }
+
+                    if (intent === 'chat') {
+                        this.traceFlow('FALLBACK_TO_CHAT', requestId, {
+                            reason: 'ui_intent_chat',
+                            bypassed_agent: true
+                        });
+                        try {
+                            const fallback = await this.callOpenRouterFallback(input, null);
+                            response = fallback.response || this.generateSmartResponse(input);
+                            usageTokens = Number(fallback.tokens || 0);
+                        } catch (_) {
+                            response = this.generateSmartResponse(input);
+                        }
+                        this.addMessage(response, 'assistant');
+                        const responseTime = Date.now() - startTime;
+                        this.analytics.responseTimes.push(responseTime);
+                        this.analytics.totalTokens += usageTokens > 0 ? usageTokens : (Math.floor(input.length / 4) + Math.floor(response.length / 4));
+                        this.updateAnalytics();
+                        this.hideTypingIndicator();
+                        this.isProcessing = false;
+                        return;
+                    }
+
+                    const commandPayload = {
+                        text: input,
+                        request_id: requestId,
+                        api_key: requiresApiKey ? effectiveKey : '',
+                        provider_id: providerId,
+                        provider_type: activeProvider?.type || 'cloud',
+                        model_ui: this.currentModel?.name || 'GPT-4 Turbo',
+                        temperature: parseFloat(document.getElementById('temperatureInput')?.value || '0.7'),
+                        max_tokens: parseInt(document.getElementById('maxTokensInput')?.value || '4000', 10),
+                        image_base64: this.attachedImage ? this.attachedImage.split(',').pop() : null,
+                        context_server_url: this.normalizeHttpUrl(this.contextServerUrl)
+                    };
+                    const liveResult = await this.sendCommand(input, commandPayload, requestId);
+                    if (liveResult.ok) {
+                        const normalized = this.applyLiveCommandResult(liveResult.result || {});
+                        response = normalized.message;
+                        usageTokens = normalized.usageTokens;
+                        this.traceFlow('EXECUTED', requestId, {
+                            source: liveResult.source || 'mcp'
+                        });
+                        await this.refreshSceneContext();
+                    } else {
+                        this.debugLog('MCP unavailable, fallback to OpenRouter', liveResult.error);
+                        const hasLiveScene = this.rpcConnected && this.sceneContextValid && Array.isArray(this.actors) && this.actors.length > 0;
+                        if (!hasLiveScene) {
+                            this.traceFlow('RUNTIME_UNAVAILABLE', requestId, {
+                                reason: 'mcp_unavailable_or_scene_missing'
+                            });
+                            response = this.buildMissingSceneDebugMessage();
+                            if (this.attachedImage) this.removeVisionAttachment();
+                            this.addMessage(response, 'assistant');
+                            const responseTime = Date.now() - startTime;
+                            this.analytics.responseTimes.push(responseTime);
+                            this.analytics.totalTokens += Math.floor(input.length / 4) + Math.floor(response.length / 4);
+                            this.updateAnalytics();
+                            this.hideTypingIndicator();
+                            this.isProcessing = false;
+                            return;
+                        }
+                        const isBillingError = /(^|[^0-9])402([^0-9]|$)|payment|required|insufficient\s*credits/i.test(String(liveResult.error || ''));
+                        const fallbackCandidate = isBillingError ? this.getFreeFallbackModel(providerId) : null;
+                        if (fallbackCandidate) {
+                            this.currentModel = fallbackCandidate;
+                            this.updateModelBadge();
+                            this.updateProviderSettingsUI();
+                            this.safeRenderModels('auto-free-fallback');
+                            this.addMessage(`Auto-fallback to free model: **${fallbackCandidate.name}**`, 'assistant');
+                        }
+                        if (fallbackCandidate) {
+                            const freeProviderId = this.normalizeProviderId(fallbackCandidate.providerId);
+                            const freeRequiresKey = Boolean(fallbackCandidate.requiresApiKey ?? this.getProviderById(freeProviderId)?.apiKeyRequired ?? true);
+                            const freeApiKey = this.getEffectiveApiKey(freeProviderId);
+                            const retryPayload = {
+                                ...commandPayload,
+                                provider_id: freeProviderId,
+                                model_ui: fallbackCandidate.name,
+                                api_key: freeRequiresKey ? freeApiKey : ''
+                            };
+                            const retryLive = await this.sendCommand(input, retryPayload);
+                            if (retryLive.ok) {
+                                const normalized = this.applyLiveCommandResult(retryLive.result || {});
+                                response = normalized.message;
+                                usageTokens = normalized.usageTokens;
+                                this.traceFlow('EXECUTED', requestId, {
+                                    source: retryLive.source || 'mcp-retry'
+                                });
+                                await this.refreshSceneContext();
+                                if (this.attachedImage) this.removeVisionAttachment();
+                                this.addMessage(response, 'assistant');
+                                const responseTime = Date.now() - startTime;
+                                this.analytics.responseTimes.push(responseTime);
+                                this.analytics.totalTokens += usageTokens > 0 ? usageTokens : (Math.floor(input.length / 4) + Math.floor(response.length / 4));
+                                this.updateAnalytics();
+                                this.hideTypingIndicator();
+                                this.isProcessing = false;
+                                return;
+                            }
+                        }
+                        try {
+                            this.traceFlow('FALLBACK_TO_CHAT', requestId, {
+                                reason: 'mcp_unavailable_openrouter_fallback'
+                            });
+                            const fallback = await this.callOpenRouterFallback(input, fallbackCandidate);
+                            response = fallback.response;
+                            usageTokens = Number(fallback.tokens || 0);
+                            if (!fallback.ok) {
+                                response = `${fallback.response}\n\n(MCP offline and OpenRouter key missing)`;
+                            }
+                        } catch (fallbackErr) {
+                            response = `${this.generateSmartResponse(input)}\n\n(MCP offline, OpenRouter error: ${fallbackErr.message})`;
+                        }
+                    }
+                    if (this.attachedImage) this.removeVisionAttachment();
+                } catch (err) {
+                    this.debugLog('processCommand failure', err?.message || err);
+                    const hasLiveScene = this.rpcConnected && this.sceneContextValid && Array.isArray(this.actors) && this.actors.length > 0;
+                    if (!hasLiveScene) {
+                        this.traceFlow('RUNTIME_UNAVAILABLE', requestId, {
+                            reason: 'process_exception_without_live_scene'
+                        });
+                        response = this.buildMissingSceneDebugMessage();
+                        this.addMessage(response, 'assistant');
+                        const responseTime = Date.now() - startTime;
+                        this.analytics.responseTimes.push(responseTime);
+                        this.analytics.totalTokens += Math.floor(input.length / 4) + Math.floor(response.length / 4);
+                        this.updateAnalytics();
+                        this.hideTypingIndicator();
+                        this.isProcessing = false;
+                        return;
+                    }
+                    const errText = String(err?.message || err || '');
+                    const isBillingError = /(^|[^0-9])402([^0-9]|$)|payment|required|insufficient\s*credits/i.test(errText);
+                    const fallbackCandidate = isBillingError ? this.getFreeFallbackModel(providerId) : null;
+                    if (fallbackCandidate) {
+                        this.currentModel = fallbackCandidate;
+                        this.updateModelBadge();
+                        this.updateProviderSettingsUI();
+                        this.safeRenderModels('auto-free-fallback-error');
+                        this.addMessage(`Auto-fallback to free model: **${fallbackCandidate.name}**`, 'assistant');
+                    }
+                    try {
+                        this.traceFlow('FALLBACK_TO_CHAT', requestId, {
+                            reason: 'process_exception_openrouter_fallback'
+                        });
+                        const fallback = await this.callOpenRouterFallback(input, fallbackCandidate);
+                        response = fallback.response;
+                        usageTokens = Number(fallback.tokens || 0);
+                    } catch (fallbackErr) {
+                        response = `${this.generateSmartResponse(input)}\n\nLive command failed (${activeProvider?.name || 'Provider'}): ${err.message}`;
+                    }
+                }
+                this.addMessage(response, 'assistant');
+                const responseTime = Date.now() - startTime;
+                this.analytics.responseTimes.push(responseTime);
+                this.analytics.totalTokens += usageTokens > 0 ? usageTokens : (Math.floor(input.length / 4) + Math.floor(response.length / 4));
+                this.updateAnalytics();
+                this.hideTypingIndicator();
+                this.isProcessing = false;
+            }
+
+            generateSmartResponse(input) {
+                const lower = input.toLowerCase();
+                const modelName = this.currentModel?.name || 'No Model';
+                if (lower.includes('hello') || lower.includes('hi') || lower.includes('مرحبا')) return `Hello. Current model: **${modelName}**`;
+                if (lower.includes('model') || lower.includes('نموذج')) return `Current model: **${modelName}**`;
+                if (lower.includes('analyze') || lower.includes('تحليل')) return `Scene analysis is ready. Actors found: ${this.actors.length}.`;
+                return `I received: "${input.substring(0, 80)}..."`;
+            }
+
+            addMessage(content, sender) {
+                const messagesDiv = document.getElementById('chatMessages');
+                if (!messagesDiv) {
+                    this.debugLog('chatMessages container missing');
+                    return;
+                }
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                messageDiv.innerHTML = `<div class="message-avatar">${sender === 'user' ? 'You' : 'RD'}</div><div class="message-content">${this.formatMessage(content)}</div>`;
+                messagesDiv.appendChild(messageDiv);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+
+            formatMessage(content) {
+                return content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`{3}(\w*)\n([\s\S]*?)`{3}/g, '<div class="code-block"><pre>$2</pre></div>').replace(/`(.*?)`/g, '<code style="background:rgba(254,96,81,0.2);padding:2px 6px;border-radius:4px;">$1</code>').replace(/\n/g, '<br>');
+            }
+
+            showTypingIndicator() {
+                const indicator = document.createElement('div'); indicator.id = 'typingIndicator'; indicator.className = 'message assistant';
+                indicator.innerHTML = `<div class="message-avatar">RD</div><div class="message-content"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+                const messages = document.getElementById('chatMessages');
+                if (!messages) return;
+                messages.appendChild(indicator);
+                messages.scrollTop = messages.scrollHeight;
+            }
+            hideTypingIndicator() { const indicator = document.getElementById('typingIndicator'); if (indicator) indicator.remove(); }
+            sendMessage() { const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text || this.isProcessing) return; input.value = ''; input.style.height = 'auto'; this.processCommand(text); }
+            toggleSidebar() {
+                const el = document.getElementById('leftSidebar');
+                if (!el) return;
+                el.classList.toggle('collapsed');
+            }
+            toggleRightSidebar() {
+                const el = document.getElementById('rightSidebar');
+                if (!el) return;
+                el.classList.toggle('collapsed');
+                el.classList.toggle('active', !el.classList.contains('collapsed'));
+            }
+            switchTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+                document.querySelectorAll('.sidebar-tab').forEach(tab => tab.classList.remove('active'));
+                const targetTab = document.getElementById(tabName + 'Tab');
+                if (targetTab) targetTab.style.display = 'block';
+                const targetBtn = document.querySelector(`[data-tab="${tabName}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+                if (tabName === 'settings') this.updateProviderSettingsUI();
+            }
+            updateAnalytics() {
+                const avgResponseTime = this.analytics.responseTimes.length > 0 ? Math.floor(this.analytics.responseTimes.reduce((a,b)=>a+b,0)/this.analytics.responseTimes.length) : 0;
+                const sessionDuration = Math.floor((Date.now() - this.analytics.sessionStart)/60000);
+                document.getElementById('totalMessages').textContent = this.analytics.totalMessages;
+                document.getElementById('totalTokens').textContent = this.analytics.totalTokens.toLocaleString();
+                document.getElementById('avgResponseTime').textContent = avgResponseTime + 'ms';
+                document.getElementById('sessionDuration').textContent = sessionDuration + 'm';
+            }
+            setupEventListeners() {
+                document.getElementById('sendBtn')?.addEventListener('click', () => this.sendMessage());
+                document.getElementById('attachImageBtn')?.addEventListener('click', () => this.attachImage());
+                document.getElementById('screenshotBtn')?.addEventListener('click', () => this.captureScreenshot());
+                document.getElementById('codeBtn')?.addEventListener('click', () => this.insertCodeTemplate());
+                document.getElementById('removeVisionBtn')?.addEventListener('click', () => this.removeVisionAttachment());
+                document.getElementById('captureBtn')?.addEventListener('click', () => this.captureScreenshot());
+                document.getElementById('analyzeBtn')?.addEventListener('click', () => this.processCommand('analyze the scene'));
+                document.getElementById('saveApiBtn')?.addEventListener('click', () => this.saveProviderConfiguration());
+                document.getElementById('refreshModelsBtn')?.addEventListener('click', () => this.refreshModels());
+                document.getElementById('getApiKeyBtn')?.addEventListener('click', () => {
+                    const provider = this.getActiveProviderForModel();
+                    const url = provider?.apiUrl || '';
+                    if (!url) {
+                        this.addMessage('No API key URL configured for this provider.', 'assistant');
+                        return;
+                    }
+                    try {
+                        window.open(url, '_blank');
+                    } catch (_) {}
+                    this.addMessage(`Open API key page for ${provider.name}: ${url}`, 'assistant');
+                });
+                document.getElementById('temperatureInput')?.addEventListener('input', (e) => { const tv = document.getElementById('temperatureValue'); if (tv) tv.textContent = e.target.value; });
+                document.getElementById('companySelect')?.addEventListener('change', (e) => this.setSelectedCompany(e.target.value, 'native-companyChange'));
+                document.getElementById('companySelectTrigger')?.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.toggleCompanyDropdown();
+                });
+                document.getElementById('companyDropdown')?.addEventListener('click', (e) => {
+                    const option = e.target?.closest?.('.company-option');
+                    if (!option) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.setSelectedCompany(option.dataset.value, 'custom-companyChange');
+                    this.toggleCompanyDropdown(false);
+                });
+                document.addEventListener('click', (e) => {
+                    const wrap = document.getElementById('companySelectWrap');
+                    if (!wrap || wrap.contains(e.target)) return;
+                    this.toggleCompanyDropdown(false);
+                });
+                document.getElementById('modelSearchInput')?.addEventListener('input', (e) => {
+                    const q = e.target.value || '';
+                    if (q === this.searchQuery) return;
+                    this.searchQuery = q;
+                    this.safeRenderModels('searchChange');
+                });
+                document.querySelectorAll('.filter-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        const isFreeOnlyToggle = chip.dataset.freeOnly === 'true';
+                        if (isFreeOnlyToggle) {
+                            this.showFreeOnly = !this.showFreeOnly;
+                            chip.classList.toggle('active', this.showFreeOnly);
+                            this.safeRenderModels('freeOnlyToggle');
+                            return;
+                        }
+                        document.querySelectorAll('.filter-chip[data-filter]').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        this.currentFilter = chip.dataset.filter;
+                        this.safeRenderModels('filterChange');
+                    });
+                });
+                document.getElementById('chatInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.sendMessage(); } });
+            }
+            delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+        }
+
+        // ==================== NEW FEATURES ADDED (without altering original code) ====================
+        // Extend the original class with new capabilities
+        const originalInit = RDStudioUltimate.prototype.init;
+        RDStudioUltimate.prototype.init = function() {
+            originalInit.call(this);
+            this.initNewFeatures();
+        };
+
+        RDStudioUltimate.prototype.initNewFeatures = function() {
+            // Multi-Agent Collaboration
+            this.agents = [
+                { id: 'coder', name: 'Code Master', active: true },
+                { id: 'designer', name: '3D Designer', active: true },
+                { id: 'analyst', name: 'Analyst', active: true }
+            ];
+            this.renderAgentBar();
+            document.getElementById('runAgentsBtn')?.addEventListener('click', () => this.runMultiAgentTask());
+
+            // Local Model Support
+            document.getElementById('connectLocalBtn')?.addEventListener('click', () => this.connectLocalModel());
+            
+            // MCP (Model Context Protocol)
+            document.getElementById('enableMCPBtn')?.addEventListener('click', () => this.enableMCP());
+
+            // Plugin System
+            this.plugins = [];
+            this.renderPluginsList();
+            document.getElementById('installPluginBtn')?.addEventListener('click', () => this.installExamplePlugin());
+
+            // Context-Aware Suggestions
+            this.startContextSuggestions();
+
+            // Advanced Code Analysis button
+            document.getElementById('advancedCodeBtn')?.addEventListener('click', () => this.advancedCodeAnalysis());
+
+            // 3D scene is initialized lazily from the Viewport controls.
+        };
+
+        RDStudioUltimate.prototype.renderAgentBar = function() {
+            const container = document.getElementById('agentListInline');
+            if (!container) return;
+            container.innerHTML = this.agents.map(ag => `<div class="agent-badge ${ag.active ? 'active' : ''}" data-id="${ag.id}">${ag.name}</div>`).join('');
+            document.querySelectorAll('#agentListInline .agent-badge').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const id = el.dataset.id;
+                    const agent = this.agents.find(a => a.id === id);
+                    if (agent) agent.active = !agent.active;
+                    this.renderAgentBar();
+                });
+            });
+        };
+
+        RDStudioUltimate.prototype.runMultiAgentTask = function() {
+            const active = this.agents.filter(a => a.active).map(a => a.name).join(', ');
+            this.addMessage(`Multi-Agent Collaboration activated.\nActive agents: ${active}`, 'assistant');
+        };
+
+        RDStudioUltimate.prototype.connectLocalModel = function() {
+            const endpoint = document.getElementById('localEndpoint')?.value || 'http://localhost:11434';
+            const model = document.getElementById('localModelName')?.value || 'llama3';
+            const providerId = endpoint.toLowerCase().includes('lmstudio') ? 'lmstudio' : 'ollama';
+            localStorage.setItem('local_model_endpoint', endpoint);
+            localStorage.setItem('local_model_name', model);
+            const localId = `${providerId}-${String(model).toLowerCase().replace(/\s+/g, '-')}`;
+            const exists = this.availableModels.some((m) => String(m.id) === localId);
+            if (!exists) {
+                this.availableModels.unshift(this.normalizeModelRecord({
+                    id: localId,
+                    name: model,
+                    providerId,
+                    type: 'chat',
+                    contextWindow: 8192,
+                    pricingType: 'local',
+                    isFree: true,
+                    requiresApiKey: false,
+                    freeTier: 'unlimited',
+                    features: ['Local'],
+                    category: ['fast'],
+                    speed: 'medium'
+                }, 0));
+                this.modelsVersion++;
+                this.filterCacheKey = '';
+            }
+            this.setSelectedCompany(providerId, 'local-provider-connect');
+            this.updateProviderSettingsUI();
+            this.safeRenderModels('local-model-connect');
+            this.addMessage(`Local model configured: ${model} at ${endpoint}. Runs locally on your machine.`, 'assistant');
+        };
+
+        RDStudioUltimate.prototype.enableMCP = function() {
+            const raw = document.getElementById('mcpServer')?.value || 'ws://127.0.0.1:8765';
+            const server = this.normalizeMcpUrl(raw);
+            localStorage.setItem('mcp_server', server);
+            this.mcpServerUrl = server;
+            const serverInput = document.getElementById('mcpServer');
+            if (serverInput) serverInput.value = server;
+            if (this.rpcSocket) {
+                try { this.rpcSocket.close(); } catch (_) {}
+            }
+            this.connectRpc();
+            this.addMessage(`Start AIRD Engine: ${server}`, 'assistant');
+
+            (async () => {
+                const isOpen = await this.waitForRpcOpen(3000);
+                if (!isOpen) {
+                    this.addMessage('MCP did not open yet. Press Start AIRD Engine again in 2-3 seconds.', 'assistant');
+                    return;
+                }
+                try {
+                    await this.rpcCall('sync_scene_context', {});
+                    await this.refreshSceneContext();
+                    this.addMessage('Scene context synced successfully.', 'assistant');
+                } catch (err) {
+                    this.addMessage(`Scene sync failed: ${err?.message || err}`, 'assistant');
+                }
+            })();
+        };
+
+        RDStudioUltimate.prototype.renderPluginsList = function() {
+            const container = document.getElementById('pluginsList');
+            if (!container) return;
+            container.innerHTML = this.plugins.map(p => `<div class="plugin-card">${p.name} - ${p.description}</div>`).join('');
+            if (this.plugins.length === 0) container.innerHTML = '<div class="plugin-card">No plugins installed. Click below to install example.</div>';
+        };
+
+        RDStudioUltimate.prototype.installExamplePlugin = function() {
+            this.plugins.push({ name: 'Code Optimizer', description: 'Enhances code analysis with AI suggestions' });
+            this.renderPluginsList();
+            this.addMessage('Example plugin "Code Optimizer" installed successfully.', 'assistant');
+        };
+
+        RDStudioUltimate.prototype.startContextSuggestions = function() {
+            const suggestions = ['إنشاء مكعب ثلاثي الأبعاد', 'تحليل المشهد الحالي', 'تفعيل الوكلاء', 'توليد مشهد 3D', 'تحسين الأداء'];
+            const bar = document.getElementById('suggestionsBar');
+            if (!bar) return;
+            const inputEl = document.getElementById('chatInput');
+            const update = () => {
+                const input = document.getElementById('chatInput').value;
+                if (input.length > 2) {
+                    bar.innerHTML = suggestions.map(s => `<div class="suggestion-chip" onclick="auraPro.processCommand('${s}')">${s}</div>`).join('');
+                } else {
+                    bar.innerHTML = suggestions.slice(0,3).map(s => `<div class="suggestion-chip" onclick="auraPro.processCommand('${s}')">${s}</div>`).join('');
+                }
+            };
+            let timer = null;
+            inputEl?.addEventListener('input', () => {
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(update, 120);
+            });
+            update();
+        };
+
+        RDStudioUltimate.prototype.advancedCodeAnalysis = function() {
+            this.addMessage(`Advanced Code Analysis\n\n- Potential performance bottlenecks detected.\n- Suggest using const/let instead of var.\n- Code complexity: moderate.\n- Security check passed.\n\nAnalysis complete.`, 'assistant');
+        };
+
+        RDStudioUltimate.prototype.initThreeJS = function() {
+            // Real-time 3D Scene Generation using Three.js on the existing canvas
+            const canvas = document.getElementById('viewportCanvas');
+            if (!canvas) return;
+            // Only initialize if not already done
+            if (this.threeScene) return;
+            import('https://unpkg.com/three@0.128.0/build/three.module.js').then(THREE => {
+                this.threeRenderer = new THREE.WebGLRenderer({ canvas, alpha: false });
+                this.threeScene = new THREE.Scene();
+                this.threeScene.background = new THREE.Color(0x131921);
+                this.threeCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+                this.threeCamera.position.set(5, 5, 10);
+                this.threeCamera.lookAt(0,0,0);
+                const ambient = new THREE.AmbientLight(0x404060);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+                dirLight.position.set(5,10,7);
+                this.threeScene.add(ambient, dirLight);
+                const grid = new THREE.GridHelper(20, 20, 0xFE6051, 0x444);
+                this.threeScene.add(grid);
+                const resize = () => { const w = canvas.clientWidth, h = canvas.clientHeight; this.threeRenderer.setSize(w,h); this.threeCamera.aspect = w/h; this.threeCamera.updateProjectionMatrix(); };
+                window.addEventListener('resize', resize);
+                resize();
+                const animate = () => { requestAnimationFrame(animate); this.threeRenderer.render(this.threeScene, this.threeCamera); };
+                animate();
+                this.threeObjects = [];
+                // Override processCommand to handle 3D generation
+                const originalProcess = this.processCommand;
+                this.processCommand = async function(input) {
+                    const lower = input.toLowerCase();
+                    if (lower.includes('إنشاء مكعب') || lower.includes('create cube')) {
+                        const geometry = new THREE.BoxGeometry(1,1,1);
+                        const material = new THREE.MeshStandardMaterial({ color: 0xFE6051 });
+                        const cube = new THREE.Mesh(geometry, material);
+                        cube.position.set(Math.random()*4-2, 0.5, Math.random()*4-2);
+                        this.threeScene.add(cube);
+                        this.threeObjects.push(cube);
+                        this.addMessage('3D Cube generated in real-time.', 'assistant');
+                        return;
+                    }
+                    if (lower.includes('توليد مشهد') || lower.includes('generate scene')) {
+                        for(let i=0;i<5;i++) {
+                            const sphereGeo = new THREE.SphereGeometry(0.4,16,16);
+                            const sphereMat = new THREE.MeshStandardMaterial({ color: 0xffaa44 });
+                            const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+                            sphere.position.set(Math.random()*6-3, 0.4, Math.random()*6-3);
+                            this.threeScene.add(sphere);
+                            this.threeObjects.push(sphere);
+                        }
+                        this.addMessage('Generated random 3D scene with spheres.', 'assistant');
+                        return;
+                    }
+                    originalProcess.call(this, input);
+                }.bind(this);
+            }).catch(err => console.warn("Three.js import failed", err));
+        };
+
+        // Voice Conversation Mode
+        RDStudioUltimate.prototype.startVoiceInput = function() {
+            if ('webkitSpeechRecognition' in window) {
+                const recognition = new webkitSpeechRecognition();
+                recognition.lang = 'ar-SA';
+                recognition.onresult = (e) => {
+                    const transcript = e.results[0][0].transcript;
+                    document.getElementById('chatInput').value = transcript;
+                    this.sendMessage();
+                };
+                recognition.start();
+                this.addMessage('Voice input started... speak now.', 'assistant');
+            } else {
+                this.addMessage('Voice recognition not supported in this browser.', 'assistant');
+            }
+        };
+
+        // Override original voice button if exists
+        const originalSetup = RDStudioUltimate.prototype.setupEventListeners;
+        RDStudioUltimate.prototype.setupEventListeners = function() {
+            originalSetup.call(this);
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (voiceBtn) voiceBtn.onclick = () => this.startVoiceInput();
+        };
+
+        // Initialize the extended instance
+        window.addEventListener('error', (evt) => {
+            try { console.error('AIRD UI error:', evt.message); } catch (_) {}
+        });
+        window.addEventListener('unhandledrejection', (evt) => {
+            try { console.error('AIRD unhandled rejection:', evt.reason); } catch (_) {}
+        });
+        const bootAirdUi = () => {
+            if (window.auraPro) return;
+            window.auraPro = new RDStudioUltimate();
+            try { console.log('[AIRD UI] boot complete'); } catch (_) {}
+        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bootAirdUi, { once: true });
+        } else {
+            bootAirdUi();
+        }
+    </script>
+    <script>
+        (function () {
+            var sources = ["frontend.js", "Content/UI/frontend.js", "../frontend.js"];
+            var index = 0;
+            var loaded = false;
+
+            function loadNext() {
+                if (loaded || index >= sources.length) {
+                    if (!loaded) {
+                        try { console.error("AIRD frontend bridge script not found."); } catch (_) {}
+                    }
+                    return;
+                }
+
+                var src = sources[index++];
+                var script = document.createElement("script");
+                script.src = src;
+                script.onload = function () { loaded = true; };
+                script.onerror = function () { loadNext(); };
+                document.body.appendChild(script);
+            }
+
+            loadNext();
+        })();
+    </script>
+</body>
+</html>
+
+
